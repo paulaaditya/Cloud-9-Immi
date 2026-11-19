@@ -27,29 +27,29 @@ export function PlayerReportCards({
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-3 pb-2 border-b border-cyan-500/10">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-3 pb-2 border-b border-sky-200/60">
         <div>
-          <h2 className="text-sm font-bold tracking-tight text-white flex items-center gap-2 uppercase">
-            <span className="w-2 h-2 rounded-full bg-[#00aeef] shadow-[0_0_8px_#00aeef]"></span>
+          <h2 className="text-sm font-bold tracking-tight text-slate-900 flex items-center gap-2 uppercase">
+            <span className="w-2 h-2 rounded-full bg-[#008cd4] shadow-[0_0_8px_#008cd4]"></span>
             Player Error Tax Report Cards
           </h2>
-          <p className="text-[11px] text-slate-400 mt-0.5">
+          <p className="text-[11px] text-slate-500 mt-0.5">
             Micro-mistake degradation and tactical vulnerability attribution
           </p>
         </div>
 
         {vulnerabilities.length > 0 && (
           <div className="flex items-center gap-1.5 text-[11px]">
-            <span className="text-slate-400">Filter:</span>
+            <span className="text-[#0077b6] font-semibold">Filter:</span>
             <select
               aria-label="Filter Vulnerability"
               value={filterVulnerability}
               onChange={(e) => setFilterVulnerability(e.target.value)}
-              className="bg-slate-900/90 text-slate-200 border border-slate-700/80 rounded px-2 py-0.5 text-[11px] focus:outline-none focus:ring-1 focus:ring-[#00aeef]"
+              className="bg-white/95 text-slate-800 border border-sky-300 rounded px-2.5 py-1 text-[11px] focus:outline-none focus:ring-1 focus:ring-[#008cd4] cursor-pointer shadow-sm"
             >
-              <option value="ALL">All Vulnerabilities</option>
+              <option value="ALL" className="bg-white text-slate-900">All Vulnerabilities</option>
               {vulnerabilities.map((v) => (
-                <option key={v} value={v}>
+                <option key={v} value={v} className="bg-white text-slate-900">
                   {v}
                 </option>
               ))}
@@ -79,71 +79,72 @@ export function PlayerReportCards({
                 }
                 className={`cursor-pointer rounded-lg p-3 transition-all duration-200 border text-xs flex flex-col justify-between ${
                   isSelected
-                    ? "bg-slate-800/90 border-[#00aeef] ring-2 ring-[#00aeef] shadow-[0_0_16px_rgba(0,174,239,0.35)]"
-                    : "glass-card border-slate-800/80 hover:border-cyan-500/40 hover:bg-slate-800/30"
+                    ? "bg-sky-50/95 border-[#00aeef] ring-2 ring-[#00aeef] shadow-[0_0_18px_rgba(0,174,239,0.35)]"
+                    : "bg-white/85 border-sky-200/80 shadow-sm hover:border-[#008cd4]/60 hover:shadow-md hover:bg-white/95"
                 }`}
               >
                 <div>
                   <div className="flex items-start justify-between gap-2 mb-2">
                     <div>
                       <div className="flex items-center gap-1.5">
-                        <h3 className="text-sm font-black text-white tracking-wide">
+                        <h3 className="text-sm font-black text-slate-900 tracking-wide">
                           {displayName}
                         </h3>
                         {card.player_name && card.player_name !== card.player_id && (
-                          <span className="text-[10px] text-slate-400 font-mono">
+                          <span className="text-[10px] text-sky-700 font-mono">
                             ({card.player_id})
                           </span>
                         )}
                         {card.character_name && (
-                          <span className="text-[10px] px-1.5 py-0.2 rounded bg-cyan-950/70 text-[#00aeef] border border-cyan-800/50 font-semibold">
+                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-sky-100 text-[#0066a1] border border-sky-300 font-semibold shadow-xs">
                             {card.character_name}
                           </span>
                         )}
                       </div>
-                      <span className="text-[10px] text-slate-400">
+                      <span className="text-[10px] text-slate-500">
                         {isSelected ? "Filtered Minimap Focus" : "Click to isolate player"}
                       </span>
                     </div>
 
                     <div className="flex flex-col items-end">
                       <span
-                        className={`text-[11px] px-2 py-0.5 rounded-full font-mono font-bold ${
+                        className={`text-[11px] px-2 py-0.5 rounded-full font-mono font-bold shadow-xs ${
                           isHighTax
-                            ? "bg-rose-950/80 text-rose-300 border border-rose-800/60"
-                            : "bg-amber-950/80 text-amber-300 border border-amber-800/60"
+                            ? "bg-rose-50 text-rose-700 border border-rose-300"
+                            : "bg-amber-50 text-amber-800 border border-amber-300"
                         }`}
                       >
                         {xrwPercentage}% xRW
                       </span>
-                      <span className="text-[9px] text-slate-400 mt-0.5">
+                      <span className="text-[9px] text-slate-500 mt-0.5 font-medium">
                         Error Tax
                       </span>
                     </div>
                   </div>
 
                   <div className="space-y-1 mb-2">
-                    <div className="flex items-center justify-between text-[11px] py-0.5 border-t border-slate-800/60">
-                      <span className="text-slate-400">Mistakes:</span>
-                      <span className="font-semibold text-slate-200">
+                    <div className="flex items-center justify-between text-[11px] py-0.5 border-t border-sky-100">
+                      <span className="text-slate-500">Mistakes:</span>
+                      <span className="font-semibold text-slate-800">
                         {card.mistake_count} Flaws
                       </span>
                     </div>
 
-                    <div className="flex items-center justify-between text-[11px] py-0.5 border-t border-slate-800/60">
-                      <span className="text-slate-400">Primary Vulnerability:</span>
-                      <span className="font-semibold text-amber-400 font-mono text-[10px]">
+                    <div className="flex items-center justify-between text-[11px] py-0.5 border-t border-sky-100">
+                      <span className="text-slate-500">Primary Vulnerability:</span>
+                      <span className="font-semibold text-amber-800 font-mono text-[10px]">
                         {card.primary_vulnerability}
                       </span>
                     </div>
                   </div>
                 </div>
 
-                <div className="bg-slate-950/70 border border-slate-800/80 rounded p-2 text-[11px] text-slate-300 mt-1">
-                  <p className="font-semibold text-slate-400 uppercase tracking-wider text-[9px] mb-0.5">
+                <div className="bg-sky-50/80 border-l-2 border-[#008cd4] border-r border-t border-b border-sky-200/70 rounded-r p-2.5 text-[11px] text-slate-700 mt-1 shadow-xs">
+                  <p className="font-bold text-[#0066a1] uppercase tracking-wider text-[9px] mb-0.5 flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#008cd4]"></span>
                     Coaching Remediation
                   </p>
-                  <p className="leading-relaxed line-clamp-2 text-slate-300">
+                  <p className="leading-relaxed line-clamp-2 text-slate-700 text-[10.5px]">
                     {card.actionable_summary}
                   </p>
                 </div>

@@ -3,11 +3,15 @@
 @tailwind utilities;
 
 :root {
-  --background: #050b14;
-  --foreground: #f1f5f9;
-  --c9-blue: #00aeef;
-  --c9-blue-dark: #0077b6;
-  --c9-glow: rgba(0, 174, 239, 0.45);
+  --background: #f0f9ff;
+  --foreground: #0f172a;
+  --c9-blue: #008cd4;
+  --c9-blue-dark: #006296;
+  --c9-cyan: #00aeef;
+  --c9-sky-light: #e0f2fe;
+  --c9-sky-border: #7dd3fc;
+  --c9-glass-bg: rgba(255, 255, 255, 0.82);
+  --c9-glass-border: rgba(0, 140, 212, 0.22);
 }
 
 body {
@@ -19,65 +23,86 @@ body {
   width: 100vw;
 }
 
-/* Custom Scrollbar */
+/* Cloud9 Official Ethereal White & Sky-Blue Ambient Crystalline Backdrop */
+.c9-bg-ethereal {
+  background-color: #f0f9ff;
+  background-image: 
+    radial-gradient(ellipse 70% 60% at 50% 50%, #ffffff 0%, rgba(240, 249, 255, 0.95) 45%, rgba(186, 230, 253, 0.65) 80%, rgba(125, 211, 252, 0.75) 100%),
+    linear-gradient(135deg, rgba(56, 189, 248, 0.12) 25%, transparent 25%),
+    linear-gradient(225deg, rgba(56, 189, 248, 0.12) 25%, transparent 25%),
+    linear-gradient(45deg, rgba(56, 189, 248, 0.08) 25%, transparent 25%),
+    linear-gradient(315deg, rgba(56, 189, 248, 0.08) 25%, #f0f9ff 25%);
+  background-size: 100% 100%, 80px 80px, 80px 80px, 80px 80px, 80px 80px;
+}
+
+/* Custom Scrollbar for Light Glass Theme */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(5, 11, 20, 0.8);
+  background: rgba(224, 242, 254, 0.6);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(0, 174, 239, 0.25);
+  background: rgba(0, 140, 212, 0.35);
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 174, 239, 0.55);
+  background: rgba(0, 140, 212, 0.65);
 }
 
-/* Glassmorphism Styles */
+/* Cloud9 Light Frosted Glassmorphism Surfaces */
 .glass-panel {
-  background: rgba(7, 17, 34, 0.75);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(0, 174, 239, 0.18);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(0, 140, 212, 0.22);
+  box-shadow: 0 10px 30px -5px rgba(0, 140, 212, 0.12), inset 0 1px 0 0 rgba(255, 255, 255, 0.95);
+}
+
+.glass-panel-accent {
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(0, 140, 212, 0.32);
+  box-shadow: 0 12px 35px -5px rgba(0, 140, 212, 0.16), inset 0 1px 0 0 rgba(255, 255, 255, 1);
 }
 
 .glass-card {
-  background: rgba(10, 22, 42, 0.65);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(0, 174, 239, 0.14);
-  box-shadow: 0 4px 20px 0 rgba(0, 0, 0, 0.25);
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(0, 140, 212, 0.18);
+  box-shadow: 0 4px 18px 0 rgba(0, 140, 212, 0.08), inset 0 1px 0 0 rgba(255, 255, 255, 0.9);
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .glass-card:hover {
-  border-color: rgba(0, 174, 239, 0.35);
+  border-color: #00aeef;
+  background: rgba(240, 249, 255, 0.95);
+  box-shadow: 0 6px 24px rgba(0, 174, 239, 0.22), inset 0 1px 0 0 rgba(255, 255, 255, 1);
 }
 
-/* Cloud9 Glow Utilities */
+/* Cloud9 Brand Glow & Pill Utilities */
 .c9-glow {
-  box-shadow: 0 0 20px rgba(0, 174, 239, 0.35);
+  box-shadow: 0 0 20px rgba(0, 140, 212, 0.35);
 }
 
 .c9-glow-lg {
-  box-shadow: 0 0 30px rgba(0, 174, 239, 0.5);
+  box-shadow: 0 0 35px rgba(0, 140, 212, 0.50);
 }
 
 .c9-text-glow {
-  text-shadow: 0 0 10px rgba(0, 174, 239, 0.75), 0 0 20px rgba(0, 174, 239, 0.35);
+  text-shadow: 0 0 10px rgba(0, 140, 212, 0.35);
 }
 
-.c9-border-glow {
-  border-color: #00aeef;
-  box-shadow: 0 0 16px rgba(0, 174, 239, 0.35);
-}
-
-.c9-active-player {
-  border-color: #00aeef !important;
-  box-shadow: 0 0 16px rgba(0, 174, 239, 0.4), inset 0 0 12px rgba(0, 174, 239, 0.15) !important;
+.c9-pill-active {
+  background: linear-gradient(135deg, #009be5 0%, #0077b6 100%);
+  color: #ffffff;
+  font-weight: 700;
+  box-shadow: 0 2px 12px rgba(0, 140, 212, 0.40);
+  border-color: #0077b6;
 }

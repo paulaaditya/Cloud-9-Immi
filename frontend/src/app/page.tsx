@@ -5,6 +5,8 @@ import { useCoachStore } from "@/store/coachStore";
 import { MinimapReplay } from "@/components/MinimapReplay";
 import { PlayerReportCards } from "@/components/PlayerReportCards";
 import { DrillPrescriptions } from "@/components/DrillPrescriptions";
+import { Cloud9Logo } from "@/components/Cloud9Logo";
+import { getMapDisplayName } from "@/lib/mapCoords";
 import {
   CoachingReportResponse,
   FeaturedSeries,
@@ -382,24 +384,22 @@ export default function CoachDashboardPage() {
   ).length;
 
   return (
-    <div className="h-screen w-screen overflow-hidden flex flex-col bg-[#050b14] text-slate-100 selection:bg-cyan-500 selection:text-black">
+    <div className="h-screen w-screen overflow-hidden flex flex-col c9-bg-ethereal text-slate-900 selection:bg-[#008cd4] selection:text-white">
       {/* Top Header Bar */}
-      <header className="h-16 flex-shrink-0 bg-[#071122]/90 border-b border-cyan-500/20 px-5 flex items-center justify-between z-20">
+      <header className="h-16 flex-shrink-0 bg-white/80 backdrop-blur-xl border-b border-sky-300/40 px-6 flex items-center justify-between z-20 shadow-[0_4px_20px_rgba(0,140,212,0.08)]">
         {/* Brand & Title */}
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-gradient-to-tr from-[#0077b6] to-[#00aeef] flex items-center justify-center font-black text-slate-950 text-base shadow-[0_0_15px_rgba(0,174,239,0.45)]">
-            C9
-          </div>
+          <Cloud9Logo size={42} glow={true} showWatermark={true} />
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-base font-black tracking-tight text-white flex items-center gap-1.5">
-                CLOUD9 <span className="text-[#00aeef]">ORACLE</span>
+              <span className="text-base font-black tracking-tight text-slate-900 flex items-center gap-1.5">
+                CLOUD9 <span className="text-[#008cd4] font-black">ORACLE</span>
               </span>
-              <span className="text-[9px] font-mono font-bold uppercase bg-cyan-950/90 text-[#00aeef] border border-cyan-800/80 px-1.5 py-0.2 rounded">
+              <span className="text-[9px] font-mono font-bold uppercase bg-sky-100 text-[#0077b6] border border-sky-300 px-1.5 py-0.2 rounded shadow-sm">
                 HUD v2.0
               </span>
             </div>
-            <p className="text-[10px] text-slate-400">
+            <p className="text-[10px] text-slate-500 font-medium">
               VCT Americas Counter-Strategy & Micro-Mistake Intelligence
             </p>
           </div>
@@ -408,18 +408,18 @@ export default function CoachDashboardPage() {
         {/* Center: Series Selector & Map Switcher */}
         <div className="flex items-center gap-3">
           {/* Series Switcher Dropdown */}
-          <div className="flex items-center gap-1.5 bg-slate-900/90 border border-slate-700/80 rounded-lg px-2.5 py-1 text-xs">
-            <span className="text-[10px] text-slate-400 uppercase font-semibold">
+          <div className="flex items-center gap-2 glass-card rounded-lg px-3 py-1.5 text-xs border-sky-200 shadow-sm">
+            <span className="text-[10px] text-[#0077b6] uppercase font-bold tracking-wider">
               Series:
             </span>
             <select
               aria-label="Select Series"
               value={selectedSeriesId}
               onChange={(e) => setSeriesId(e.target.value)}
-              className="bg-transparent text-slate-200 text-xs font-semibold focus:outline-none cursor-pointer"
+              className="bg-transparent text-slate-900 text-xs font-semibold focus:outline-none cursor-pointer"
             >
               {featuredSeries.map((s) => (
-                <option key={s.series_id} value={s.series_id} className="bg-slate-900 text-slate-200">
+                <option key={s.series_id} value={s.series_id} className="bg-white text-slate-900">
                   {s.teams} ({s.series_id})
                 </option>
               ))}
@@ -427,55 +427,56 @@ export default function CoachDashboardPage() {
           </div>
 
           {/* Game / Map Switcher Tabs */}
-          <div className="flex items-center gap-1 bg-slate-950/70 p-1 rounded-lg border border-slate-800">
+          <div className="flex items-center gap-1.5 bg-white/70 p-1.5 rounded-lg border border-sky-200 shadow-sm">
             {data.games && data.games.length > 0 ? (
               data.games.map((g, idx) => {
                 const isSelectedMap = idx === currentGameIndex;
+                const formattedMap = getMapDisplayName(g.map_name);
                 return (
                   <button
                     key={g.game_id || idx}
                     type="button"
                     onClick={() => setGameIndex(idx)}
-                    className={`px-2.5 py-1 rounded text-[11px] font-semibold transition-all ${
+                    className={`px-3 py-1 rounded text-[11px] transition-all font-semibold ${
                       isSelectedMap
-                        ? "bg-[#00aeef] text-black font-bold shadow-[0_0_10px_rgba(0,174,239,0.5)]"
-                        : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
+                        ? "c9-pill-active"
+                        : "text-slate-600 hover:text-slate-900 hover:bg-sky-100/60"
                     }`}
                   >
-                    Map {idx + 1}: {g.map_name}
+                    Map {idx + 1}: {formattedMap}
                   </button>
                 );
               })
             ) : (
-              <span className="text-xs text-slate-400 px-2">Map 1: Ascent</span>
+              <span className="text-xs text-slate-500 px-2">Map 1: Ascent</span>
             )}
           </div>
         </div>
 
         {/* Right: Live Match Score Badge & Telemetry State */}
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 bg-slate-950/80 border border-cyan-500/20 px-3 py-1 rounded-full text-xs font-mono font-bold">
-            <span className="text-slate-200">{data.team1_name || "NRG"}</span>
-            <span className="text-white bg-slate-800 px-1.5 py-0.2 rounded">
+          <div className="flex items-center gap-2 glass-card px-3.5 py-1 rounded-full text-xs font-mono font-bold border-sky-200 shadow-sm">
+            <span className="text-slate-700">{data.team1_name || "NRG"}</span>
+            <span className="text-slate-900 bg-sky-100 px-1.5 py-0.2 rounded border border-sky-200">
               {team1Score}
             </span>
-            <span className="text-[#00aeef]">:</span>
-            <span className="text-[#00aeef] bg-cyan-950 px-1.5 py-0.2 rounded border border-cyan-800/60">
+            <span className="text-[#008cd4] font-bold">:</span>
+            <span className="text-white bg-[#008cd4] px-1.5 py-0.2 rounded font-bold shadow-[0_0_8px_rgba(0,140,212,0.3)]">
               {team2Score}
             </span>
-            <span className="text-[#00aeef]">{data.team2_name || "Cloud9"}</span>
+            <span className="text-[#0077b6] font-black">{data.team2_name || "Cloud9"}</span>
           </div>
 
           <div
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border font-mono text-[10px] font-bold ${
+            className={`flex items-center gap-1.5 px-3 py-1 rounded-lg border font-mono text-[10px] font-bold ${
               dataSource === "live"
-                ? "bg-emerald-950/50 text-emerald-300 border-emerald-700/80"
-                : "bg-slate-900/90 text-cyan-300 border-slate-700"
+                ? "bg-emerald-50 text-emerald-700 border-emerald-300 shadow-sm"
+                : "bg-sky-50 text-[#0077b6] border-sky-300 shadow-sm"
             }`}
           >
             <span
               className={`w-1.5 h-1.5 rounded-full ${
-                dataSource === "live" ? "bg-emerald-400 animate-pulse" : "bg-[#00aeef]"
+                dataSource === "live" ? "bg-emerald-500 animate-pulse" : "bg-[#008cd4]"
               }`}
             ></span>
             {dataSource === "live" ? "LIVE TELEMETRY" : "BENCHMARK"}

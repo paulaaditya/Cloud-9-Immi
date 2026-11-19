@@ -10,6 +10,7 @@ router = APIRouter(prefix="/api/v1")
 
 
 @router.get("/featured-series", response_model=List[Dict[str, Any]])
+@router.get("/series/featured", response_model=List[Dict[str, Any]])
 def get_featured_series_endpoint():
     """Return catalog of featured Cloud9 and marquee VCT series matches."""
     return get_featured_series()

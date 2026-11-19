@@ -12,11 +12,12 @@ def test_health_check():
 
 
 def test_get_featured_series_api():
-    response = client.get("/api/v1/featured-series")
-    assert response.status_code == 200
-    series_list = response.json()
-    assert isinstance(series_list, list)
-    assert len(series_list) >= 5
+    for endpoint in ["/api/v1/featured-series", "/api/v1/series/featured"]:
+        response = client.get(endpoint)
+        assert response.status_code == 200
+        series_list = response.json()
+        assert isinstance(series_list, list)
+        assert len(series_list) >= 5
 
     sids = [s["series_id"] for s in series_list]
     assert "2748746" in sids  # NRG vs Cloud9

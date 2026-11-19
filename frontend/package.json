@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "node ./node_modules/jest/bin/jest.js --passWithNoTests"
+    "test": "node ./node_modules/jest/bin/jest.js --passWithNoTests --runInBand"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.62.8",

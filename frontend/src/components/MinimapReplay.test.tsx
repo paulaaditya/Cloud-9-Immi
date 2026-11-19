@@ -2,6 +2,11 @@ import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { MinimapReplay } from "./MinimapReplay";
 import { AttributedMistake, KillEvent } from "@/types/api";
+import {
+  normalizeMapName,
+  getMapDisplayName,
+  mapWorldToCanvas,
+} from "../lib/mapCoords";
 
 const mockMistakes: AttributedMistake[] = [
   {
@@ -219,5 +224,77 @@ describe("MinimapReplay Component", () => {
     expect(playBtn).toHaveTextContent("Play");
     fireEvent.click(playBtn);
     expect(handleTogglePlay).toHaveBeenCalledTimes(1);
+  });
+
+  describe("Map normalization and coordinate calibration", () => {
+    it("correctly normalizes all competitive Valorant maps", () => {
+      expect(normalizeMapName("lotus")).toBe("lotus");
+      expect(normalizeMapName("Lotus")).toBe("lotus");
+      expect(normalizeMapName("abyss")).toBe("abyss");
+      expect(normalizeMapName("Sunset")).toBe("sunset");
+      expect(normalizeMapName("/Game/Maps/Jam/Jam")).toBe("lotus");
+      expect(normalizeMapName("/Game/Maps/Canyon/Canyon")).toBe("fracture");
+      expect(normalizeMapName(null)).toBe("ascent");
+    });
+
+    it("formats map display names cleanly", () => {
+      expect(getMapDisplayName("lotus")).toBe("Lotus");
+      expect(getMapDisplayName("abyss")).toBe("Abyss");
+      expect(getMapDisplayName("sunset")).toBe("Sunset");
+      expect(getMapDisplayName("fracture")).toBe("Fracture");
+    });
+
+    it("translates world coordinates to within canvas boundary bounds", () => {
+      const pos = mapWorldToCanvas("fracture", 7522, -6404, 600, 600);
+      expect(pos.x).toBeGreaterThanOrEqual(20);
+      expect(pos.x).toBeLessThanOrEqual(580);
+      expect(pos.y).toBeGreaterThanOrEqual(20);
+      expect(pos.y).toBeLessThanOrEqual(580);
+    });
+
+    it("renders radar when mapName is Lotus", () => {
+      render(
+        <MinimapReplay
+          currentRound={1}
+          totalRounds={24}
+          mistakes={[]}
+          kills={[]}
+          onRoundChange={jest.fn()}
+          mapName="Lotus"
+        />
+      );
+      expect(screen.getByText("Lotus")).toBeInTheDocument();
+      expect(screen.getByText("Spatial Radar: Lotus")).toBeInTheDocument();
+    });
+
+    it("toggles between active round mistakes and all match mistakes stream", () => {
+      const handleRoundChange = jest.fn();
+      render(
+        <MinimapReplay
+          currentRound={1}
+          totalRounds={24}
+          mistakes={mockMistakes}
+          kills={mockKills}
+          onRoundChange={handleRoundChange}
+        />
+      );
+
+      // Initially on active round (Round 1: 1 mistake for OXY)
+      expect(screen.getByText("Round Mistakes (1)")).toBeInTheDocument();
+      expect(screen.getByText("All Match Mistakes (2)")).toBeInTheDocument();
+      expect(screen.getAllByTestId("mistake-marker").length).toBe(1);
+
+      // Click All Match Mistakes tab
+      fireEvent.click(screen.getByText("All Match Mistakes (2)"));
+
+      // Now both Round 1 (OXY) and Round 2 (vanity) are rendered
+      expect(screen.getAllByTestId("mistake-marker").length).toBe(2);
+      expect(screen.getByText("vanity")).toBeInTheDocument();
+
+      // Clicking Round 2 mistake switches round to 2
+      const vanityCard = screen.getAllByTestId("mistake-marker")[1];
+      fireEvent.click(vanityCard);
+      expect(handleRoundChange).toHaveBeenCalledWith(2);
+    });
   });
 });
