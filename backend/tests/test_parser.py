@@ -19,9 +19,13 @@ def test_parse_series_extracts_structure():
     k = round_obj.kills[0]
     assert k.killer_id != ""
     assert k.victim_id != ""
+    assert k.killer_name is not None and k.killer_name != ""
+    assert k.victim_name is not None and k.victim_name != ""
     assert k.occurred_at != ""
     # Check ability casts exist and have 3D coordinates from supplement
     assert len(round_obj.ability_casts) > 0
+    assert any(cast.player_name is not None and cast.player_name != "" for cast in round_obj.ability_casts)
+    assert round_obj.round_winner_name is not None
     ability_with_coords = any(
         cast.position is not None for cast in round_obj.ability_casts
     )

@@ -1,13 +1,16 @@
 import datetime
-from typing import List, Optional
+from typing import Dict, List, Optional
 from pydantic import BaseModel
 from src.analytics.xrw_model import ExpectedRoundWinModel, RoundStateVector
+from src.data.metadata import get_player_name, get_series_roster
 from src.models.match_state import KillEvent, ParsedRound
 
 
 class AttributedMistake(BaseModel):
     mistake_type: str  # UNTRADED_FIRST_DEATH, ISOLATED_DUEL, UTILITY_DELAY
     player_id: str
+    player_name: Optional[str] = None
+    character_name: Optional[str] = None
     round_number: int
     occurred_at: str
     win_prob_delta: float
@@ -22,7 +25,10 @@ def parse_iso_time(timestamp: str) -> datetime.datetime:
 
 
 def detect_round_mistakes(
-    round_obj: ParsedRound, trade_window_sec: float = 3.0
+    round_obj: ParsedRound,
+    trade_window_sec: float = 3.0,
+    series_id: Optional[str] = None,
+    roster: Optional[Dict[str, Dict[str, str]]] = None,
 ) -> List[AttributedMistake]:
     """Detect micro-mistakes in a round and attribute them with win probability delta (xRW impact)."""
     mistakes: List[AttributedMistake] = []
@@ -65,15 +71,29 @@ def detect_round_mistakes(
                 break
 
         if not traded:
+            victim_id = first_kill.victim_id
+            player_name = first_kill.victim_name or get_player_name(victim_id)
+            if not player_name:
+                player_name = victim_id
+
+            if not roster and series_id:
+                roster = get_series_roster(series_id)
+
+            char_name = None
+            if roster and victim_id in roster:
+                char_name = roster[victim_id].get("character_name")
+
             mistakes.append(
                 AttributedMistake(
                     mistake_type="UNTRADED_FIRST_DEATH",
-                    player_id=first_kill.victim_id,
+                    player_id=victim_id,
+                    player_name=player_name,
+                    character_name=char_name,
                     round_number=round_obj.round_number,
                     occurred_at=first_kill.occurred_at,
                     win_prob_delta=opening_death_penalty,
-                    description="Untraded opening death with no return trade within 3.0 seconds.",
-                    coaching_fix="Establish buddy-system spacing (< 6 meters) and hold crossfire angles rather than dry-peeking before support utility.",
+                    description=f"{player_name} died dry-peeking early with zero support flash or drone. Left team in a 4v5 disadvantage.",
+                    coaching_fix="Hold crossfire angle with your teammate. Maintain buddy spacing and do not swing until initiator utility clears the choke.",
                 )
             )
 

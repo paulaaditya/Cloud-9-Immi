@@ -1,4 +1,5 @@
 from typing import Any, Dict, List, Optional
+from src.data.metadata import get_player_name, _clean_team_name
 from src.data.streamer import load_ability_supplement, stream_series_events
 from src.models.match_state import (
     AbilityCast,
@@ -122,6 +123,8 @@ def parse_series(series_id: str, max_envelopes: Optional[int] = None) -> ParsedS
                                 event_id=e.get("id", ""),
                                 killer_id=killer,
                                 victim_id=victim,
+                                killer_name=get_player_name(killer),
+                                victim_name=get_player_name(victim),
                                 weapon=weapon,
                                 occurred_at=occurred_at,
                                 killer_position=k_pos,
@@ -182,6 +185,7 @@ def parse_series(series_id: str, max_envelopes: Optional[int] = None) -> ParsedS
                                 ability_id=ability_name,
                                 slot=slot,
                                 player_id=pid,
+                                player_name=get_player_name(pid),
                                 occurred_at=occurred_at,
                                 position=pos,
                                 view_direction=view,
@@ -211,6 +215,11 @@ def parse_series(series_id: str, max_envelopes: Optional[int] = None) -> ParsedS
                             if teams_delta and isinstance(teams_delta, list):
                                 win_cond = teams_delta[0].get("winType")
                         active_round.win_condition = win_cond
+                        raw_wname = e.get("actor", {}).get("state", {}).get("name")
+                        if raw_wname:
+                            active_round.round_winner_name = _clean_team_name(raw_wname)
+                        elif active_round.winning_team_id:
+                            active_round.round_winner_name = active_round.winning_team_id
 
     valid_games = [
         g for gid, g in games_map.items() if gid not in invalidated_game_ids

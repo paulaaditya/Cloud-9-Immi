@@ -13,6 +13,7 @@ class AbilityCast(BaseModel):
     ability_id: str
     slot: str
     player_id: str
+    player_name: Optional[str] = None
     occurred_at: str
     position: Optional[Vector3D] = None
     view_direction: Optional[Vector3D] = None
@@ -23,6 +24,8 @@ class KillEvent(BaseModel):
     event_id: str
     killer_id: str
     victim_id: str
+    killer_name: Optional[str] = None
+    victim_name: Optional[str] = None
     weapon: Optional[str] = None
     occurred_at: str
     killer_position: Optional[Vector3D] = None
@@ -33,6 +36,7 @@ class KillEvent(BaseModel):
 class ParsedRound(BaseModel):
     round_number: int
     winning_team_id: Optional[str] = None
+    round_winner_name: Optional[str] = None
     win_condition: Optional[str] = None
     kills: List[KillEvent] = Field(default_factory=list)
     ability_casts: List[AbilityCast] = Field(default_factory=list)
