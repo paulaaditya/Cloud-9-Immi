@@ -7,6 +7,7 @@ const mockDrills: PrescribedDrill[] = [
   {
     drill_name: "Buddy-System Contact & Trade Timing 2v2",
     target_players: ["OXY", "runi"],
+    target_player_names: ["OXY", "runi"],
     drill_objective: "Reinforce sub-6m proximity spacing and synchronized peeking.",
     setup_steps: [
       "Pair target players as entry fragger and secondary trader at choke entrance.",
@@ -17,6 +18,7 @@ const mockDrills: PrescribedDrill[] = [
   {
     drill_name: "Crossfire & Spacing 2v2",
     target_players: ["vanity", "moose"],
+    target_player_names: ["vanity", "moose"],
     drill_objective: "Eliminate isolated solo engagements by anchoring paired crossfire angles.",
     setup_steps: [
       "Position two defenders on site in complementary crossfire lines.",
@@ -33,6 +35,7 @@ describe("DrillPrescriptions Component", () => {
     expect(screen.getByText("Buddy-System Contact & Trade Timing 2v2")).toBeInTheDocument();
     expect(screen.getByText("Crossfire & Spacing 2v2")).toBeInTheDocument();
     expect(screen.getByText(/Zero untraded deaths across 10 rounds/i)).toBeInTheDocument();
+    expect(screen.getByText("OXY")).toBeInTheDocument();
   });
 
   it("filters drills by selected player", () => {

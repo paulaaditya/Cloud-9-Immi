@@ -5,26 +5,60 @@ import { useCoachStore } from "@/store/coachStore";
 import { MinimapReplay } from "@/components/MinimapReplay";
 import { PlayerReportCards } from "@/components/PlayerReportCards";
 import { DrillPrescriptions } from "@/components/DrillPrescriptions";
-import { CoachingReportResponse, AttributedMistake } from "@/types/api";
+import {
+  CoachingReportResponse,
+  FeaturedSeries,
+} from "@/types/api";
+
+const DEFAULT_FEATURED_SERIES: FeaturedSeries[] = [
+  {
+    series_id: "2748746",
+    teams: "NRG vs Cloud9",
+    event: "VCT Americas Stage 1",
+    is_cloud9: true,
+  },
+  {
+    series_id: "2748750",
+    teams: "Cloud9 vs G2 Esports",
+    event: "VCT Americas Stage 1",
+    is_cloud9: true,
+  },
+  {
+    series_id: "2748754",
+    teams: "Cloud9 vs MIBR",
+    event: "VCT Americas Stage 1",
+    is_cloud9: true,
+  },
+  {
+    series_id: "2748743",
+    teams: "Evil Geniuses vs LOUD",
+    event: "VCT Americas Stage 1",
+    is_cloud9: false,
+  },
+];
 
 const MOCK_COACHING_REPORT: CoachingReportResponse = {
-  series_id: "2748743",
-  team1_name: "Cloud9",
-  team2_name: "Sentinels",
-  total_games: 1,
+  series_id: "2748746",
+  team1_name: "NRG",
+  team2_name: "Cloud9",
+  total_games: 2,
+  selected_game_index: 0,
   games: [
     {
       game_id: "game-1",
       map_name: "Ascent",
       rounds: Array.from({ length: 24 }, (_, i) => ({
         round_number: i + 1,
-        winning_team_id: i % 2 === 0 ? "Cloud9" : "Sentinels",
+        winning_team_id: i % 2 === 0 ? "Cloud9" : "NRG",
+        round_winner_name: i % 2 === 0 ? "Cloud9" : "NRG",
         win_condition: i % 3 === 0 ? "SpikeDefused" : "Elimination",
         kills: [
           {
             event_id: `kill-${i}-1`,
-            killer_id: "zekken",
+            killer_id: "crashies",
             victim_id: i % 2 === 0 ? "OXY" : "vanity",
+            killer_name: "crashies",
+            victim_name: i % 2 === 0 ? "OXY" : "vanity",
             weapon: "Vandal",
             occurred_at: `2026-11-19T10:0${i % 10}:15Z`,
             killer_position: { x: 320, y: 220, z: 0 },
@@ -38,12 +72,27 @@ const MOCK_COACHING_REPORT: CoachingReportResponse = {
         spike_plant_time: null,
       })),
     },
+    {
+      game_id: "game-2",
+      map_name: "Bind",
+      rounds: Array.from({ length: 21 }, (_, i) => ({
+        round_number: i + 1,
+        winning_team_id: i % 2 === 1 ? "Cloud9" : "NRG",
+        round_winner_name: i % 2 === 1 ? "Cloud9" : "NRG",
+        win_condition: "Elimination",
+        kills: [],
+        ability_casts: [],
+        spike_planted: false,
+      })),
+    },
   ],
   total_mistakes_detected: 8,
   mistakes: [
     {
       mistake_type: "UNTRADED_FIRST_DEATH",
       player_id: "OXY",
+      player_name: "OXY",
+      character_name: "Jett",
       round_number: 1,
       occurred_at: "2026-11-19T10:00:15Z",
       win_prob_delta: -0.312,
@@ -53,6 +102,8 @@ const MOCK_COACHING_REPORT: CoachingReportResponse = {
     {
       mistake_type: "ISOLATED_DUEL",
       player_id: "vanity",
+      player_name: "vanity",
+      character_name: "Omen",
       round_number: 2,
       occurred_at: "2026-11-19T10:01:22Z",
       win_prob_delta: -0.245,
@@ -62,6 +113,8 @@ const MOCK_COACHING_REPORT: CoachingReportResponse = {
     {
       mistake_type: "UTILITY_DELAY",
       player_id: "Xeppaa",
+      player_name: "Xeppaa",
+      character_name: "Fade",
       round_number: 3,
       occurred_at: "2026-11-19T10:02:40Z",
       win_prob_delta: -0.180,
@@ -71,6 +124,8 @@ const MOCK_COACHING_REPORT: CoachingReportResponse = {
     {
       mistake_type: "UNTRADED_FIRST_DEATH",
       player_id: "runi",
+      player_name: "runi",
+      character_name: "Sova",
       round_number: 4,
       occurred_at: "2026-11-19T10:03:18Z",
       win_prob_delta: -0.295,
@@ -80,6 +135,8 @@ const MOCK_COACHING_REPORT: CoachingReportResponse = {
     {
       mistake_type: "ISOLATED_DUEL",
       player_id: "moose",
+      player_name: "moose",
+      character_name: "Cypher",
       round_number: 5,
       occurred_at: "2026-11-19T10:04:30Z",
       win_prob_delta: -0.220,
@@ -89,6 +146,8 @@ const MOCK_COACHING_REPORT: CoachingReportResponse = {
     {
       mistake_type: "UNTRADED_FIRST_DEATH",
       player_id: "OXY",
+      player_name: "OXY",
+      character_name: "Jett",
       round_number: 7,
       occurred_at: "2026-11-19T10:06:12Z",
       win_prob_delta: -0.320,
@@ -98,6 +157,8 @@ const MOCK_COACHING_REPORT: CoachingReportResponse = {
     {
       mistake_type: "UTILITY_DELAY",
       player_id: "Xeppaa",
+      player_name: "Xeppaa",
+      character_name: "Fade",
       round_number: 9,
       occurred_at: "2026-11-19T10:08:45Z",
       win_prob_delta: -0.175,
@@ -107,6 +168,8 @@ const MOCK_COACHING_REPORT: CoachingReportResponse = {
     {
       mistake_type: "UNTRADED_FIRST_DEATH",
       player_id: "OXY",
+      player_name: "OXY",
+      character_name: "Jett",
       round_number: 12,
       occurred_at: "2026-11-19T10:11:05Z",
       win_prob_delta: -0.315,
@@ -117,6 +180,8 @@ const MOCK_COACHING_REPORT: CoachingReportResponse = {
   player_reports: [
     {
       player_id: "OXY",
+      player_name: "OXY",
+      character_name: "Jett",
       mistake_count: 3,
       cumulative_xrw_tax: -0.947,
       primary_vulnerability: "UNTRADED_FIRST_DEATH",
@@ -124,6 +189,8 @@ const MOCK_COACHING_REPORT: CoachingReportResponse = {
     },
     {
       player_id: "vanity",
+      player_name: "vanity",
+      character_name: "Omen",
       mistake_count: 1,
       cumulative_xrw_tax: -0.245,
       primary_vulnerability: "ISOLATED_DUEL",
@@ -131,6 +198,8 @@ const MOCK_COACHING_REPORT: CoachingReportResponse = {
     },
     {
       player_id: "runi",
+      player_name: "runi",
+      character_name: "Sova",
       mistake_count: 1,
       cumulative_xrw_tax: -0.295,
       primary_vulnerability: "UNTRADED_FIRST_DEATH",
@@ -138,6 +207,8 @@ const MOCK_COACHING_REPORT: CoachingReportResponse = {
     },
     {
       player_id: "Xeppaa",
+      player_name: "Xeppaa",
+      character_name: "Fade",
       mistake_count: 2,
       cumulative_xrw_tax: -0.355,
       primary_vulnerability: "UTILITY_DELAY",
@@ -145,6 +216,8 @@ const MOCK_COACHING_REPORT: CoachingReportResponse = {
     },
     {
       player_id: "moose",
+      player_name: "moose",
+      character_name: "Cypher",
       mistake_count: 1,
       cumulative_xrw_tax: -0.220,
       primary_vulnerability: "ISOLATED_DUEL",
@@ -155,6 +228,7 @@ const MOCK_COACHING_REPORT: CoachingReportResponse = {
     {
       drill_name: "Buddy-System Contact & Trade Timing 2v2",
       target_players: ["OXY", "runi"],
+      target_player_names: ["OXY", "runi"],
       drill_objective: "Reinforce sub-6m proximity spacing and synchronized peeking to guarantee trade kills on contact.",
       setup_steps: [
         "Pair target players as entry fragger and secondary trader at choke entrance.",
@@ -167,6 +241,7 @@ const MOCK_COACHING_REPORT: CoachingReportResponse = {
     {
       drill_name: "Crossfire & Spacing 2v2",
       target_players: ["vanity", "moose"],
+      target_player_names: ["vanity", "moose"],
       drill_objective: "Eliminate isolated solo engagements by anchoring paired crossfire angles.",
       setup_steps: [
         "Position two defenders on site in complementary crossfire lines.",
@@ -179,6 +254,7 @@ const MOCK_COACHING_REPORT: CoachingReportResponse = {
     {
       drill_name: "Utility Timing & Flash Synchronization",
       target_players: ["Xeppaa"],
+      target_player_names: ["Xeppaa"],
       drill_objective: "Synchronize support flashes and utility usage with entry player contact timing.",
       setup_steps: [
         "Support player lines up flash or concussive utility outside target zone.",
@@ -194,204 +270,263 @@ const MOCK_COACHING_REPORT: CoachingReportResponse = {
 export default function CoachDashboardPage() {
   const {
     selectedSeriesId,
+    currentGameIndex,
+    selectedPlayerId,
+    isPlaying,
     currentRound,
     totalRounds,
     selectedMistake,
+    setSeriesId,
+    setGameIndex,
+    setSelectedPlayerId,
+    togglePlay,
     setCurrentRound,
     setTotalRounds,
     setSelectedMistake,
   } = useCoachStore();
 
+  const [featuredSeries, setFeaturedSeries] = useState<FeaturedSeries[]>(
+    DEFAULT_FEATURED_SERIES
+  );
   const [data, setData] = useState<CoachingReportResponse>(MOCK_COACHING_REPORT);
-  const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
   const [dataSource, setDataSource] = useState<"live" | "mock">("mock");
-  const [isLoading, setIsLoading] = useState<boolean>(false);
 
+  // Fetch featured series catalog
+  useEffect(() => {
+    let isMounted = true;
+    async function fetchFeatured() {
+      try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+        const res = await fetch(`${apiUrl}/api/v1/featured-series`);
+        if (res.ok) {
+          const list: FeaturedSeries[] = await res.json();
+          if (isMounted && Array.isArray(list) && list.length > 0) {
+            setFeaturedSeries(list);
+          }
+        }
+      } catch {
+        // Fallback to default series list
+      }
+    }
+    fetchFeatured();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // Fetch coaching report for selected series and game index
   useEffect(() => {
     let isMounted = true;
     const controller = new AbortController();
 
-    async function fetchTelemetry() {
-      setIsLoading(true);
+    async function fetchReport() {
       try {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-        const response = await fetch(
-          `${apiUrl}/api/v1/series/${selectedSeriesId}/coaching-report?max_envelopes=2000`,
-          {
-            signal: controller.signal,
-          }
+        const res = await fetch(
+          `${apiUrl}/api/v1/series/${selectedSeriesId}/coaching-report?game_index=${currentGameIndex}&max_envelopes=2000`,
+          { signal: controller.signal }
         );
-        if (response.ok) {
-          const report: CoachingReportResponse = await response.json();
+        if (res.ok) {
+          const report: CoachingReportResponse = await res.json();
           if (isMounted) {
             setData(report);
             setDataSource("live");
-            if (report.games?.[0]?.rounds?.length) {
-              setTotalRounds(report.games[0].rounds.length);
+            const activeMap = report.games?.[currentGameIndex] || report.games?.[0];
+            if (activeMap?.rounds?.length) {
+              setTotalRounds(activeMap.rounds.length);
             }
           }
         } else {
           if (isMounted) {
-            setData(MOCK_COACHING_REPORT);
+            setData((prev) => ({
+              ...MOCK_COACHING_REPORT,
+              series_id: selectedSeriesId,
+            }));
             setDataSource("mock");
           }
         }
       } catch {
         if (isMounted) {
-          setData(MOCK_COACHING_REPORT);
+          setData((prev) => ({
+            ...MOCK_COACHING_REPORT,
+            series_id: selectedSeriesId,
+          }));
           setDataSource("mock");
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
         }
       }
     }
 
-    fetchTelemetry();
+    fetchReport();
 
     return () => {
       isMounted = false;
       controller.abort();
     };
-  }, [selectedSeriesId, setTotalRounds]);
+  }, [selectedSeriesId, currentGameIndex, setTotalRounds]);
 
-  const activeGame = data.games?.[0];
+  const activeGame = data.games?.[currentGameIndex] || data.games?.[0];
+  const activeRounds = activeGame?.rounds || [];
   const activeRoundKills =
-    activeGame?.rounds?.find((r) => r.round_number === currentRound)?.kills || [];
+    activeRounds.find((r) => r.round_number === currentRound)?.kills || [];
 
-  const cumulativeTax = data.mistakes
-    .reduce((acc, m) => acc + m.win_prob_delta, 0)
-    .toFixed(2);
+  // Match score calculation
+  const team1Score = activeRounds.filter(
+    (r) =>
+      r.winning_team_id === data.team1_name ||
+      r.round_winner_name === data.team1_name
+  ).length;
+  const team2Score = activeRounds.filter(
+    (r) =>
+      r.winning_team_id === data.team2_name ||
+      r.round_winner_name === data.team2_name
+  ).length;
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-100 p-4 sm:p-6 lg:p-8 flex flex-col gap-6 max-w-7xl mx-auto">
-      {/* Top Navigation HUD */}
-      <header className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-xl">
+    <div className="h-screen w-screen overflow-hidden flex flex-col bg-[#050b14] text-slate-100 selection:bg-cyan-500 selection:text-black">
+      {/* Top Header Bar */}
+      <header className="h-16 flex-shrink-0 bg-[#071122]/90 border-b border-cyan-500/20 px-5 flex items-center justify-between z-20">
+        {/* Brand & Title */}
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-gradient-to-tr from-cyan-600 to-sky-400 flex items-center justify-center font-black text-slate-950 tracking-tighter text-lg shadow-md shadow-cyan-900">
+          <div className="w-9 h-9 rounded-lg bg-gradient-to-tr from-[#0077b6] to-[#00aeef] flex items-center justify-center font-black text-slate-950 text-base shadow-[0_0_15px_rgba(0,174,239,0.45)]">
             C9
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-xl font-black tracking-tight text-white">
-                C9 ORACLE
-              </h1>
-              <span className="text-[10px] tracking-widest font-mono uppercase bg-cyan-950 text-cyan-300 border border-cyan-800/80 px-2 py-0.5 rounded">
-                Tactical HUD v1.0
+              <span className="text-base font-black tracking-tight text-white flex items-center gap-1.5">
+                CLOUD9 <span className="text-[#00aeef]">ORACLE</span>
+              </span>
+              <span className="text-[9px] font-mono font-bold uppercase bg-cyan-950/90 text-[#00aeef] border border-cyan-800/80 px-1.5 py-0.2 rounded">
+                HUD v2.0
               </span>
             </div>
-            <p className="text-xs text-slate-400">
+            <p className="text-[10px] text-slate-400">
               VCT Americas Counter-Strategy & Micro-Mistake Intelligence
             </p>
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3 text-xs">
-          <div className="flex items-center gap-2 bg-slate-950 px-3 py-1.5 rounded-lg border border-slate-800">
-            <span className="text-slate-400">Match Series:</span>
-            <span className="font-mono font-bold text-white">
-              {data.team1_name} vs {data.team2_name}
+        {/* Center: Series Selector & Map Switcher */}
+        <div className="flex items-center gap-3">
+          {/* Series Switcher Dropdown */}
+          <div className="flex items-center gap-1.5 bg-slate-900/90 border border-slate-700/80 rounded-lg px-2.5 py-1 text-xs">
+            <span className="text-[10px] text-slate-400 uppercase font-semibold">
+              Series:
             </span>
+            <select
+              aria-label="Select Series"
+              value={selectedSeriesId}
+              onChange={(e) => setSeriesId(e.target.value)}
+              className="bg-transparent text-slate-200 text-xs font-semibold focus:outline-none cursor-pointer"
+            >
+              {featuredSeries.map((s) => (
+                <option key={s.series_id} value={s.series_id} className="bg-slate-900 text-slate-200">
+                  {s.teams} ({s.series_id})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Game / Map Switcher Tabs */}
+          <div className="flex items-center gap-1 bg-slate-950/70 p-1 rounded-lg border border-slate-800">
+            {data.games && data.games.length > 0 ? (
+              data.games.map((g, idx) => {
+                const isSelectedMap = idx === currentGameIndex;
+                return (
+                  <button
+                    key={g.game_id || idx}
+                    type="button"
+                    onClick={() => setGameIndex(idx)}
+                    className={`px-2.5 py-1 rounded text-[11px] font-semibold transition-all ${
+                      isSelectedMap
+                        ? "bg-[#00aeef] text-black font-bold shadow-[0_0_10px_rgba(0,174,239,0.5)]"
+                        : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
+                    }`}
+                  >
+                    Map {idx + 1}: {g.map_name}
+                  </button>
+                );
+              })
+            ) : (
+              <span className="text-xs text-slate-400 px-2">Map 1: Ascent</span>
+            )}
+          </div>
+        </div>
+
+        {/* Right: Live Match Score Badge & Telemetry State */}
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 bg-slate-950/80 border border-cyan-500/20 px-3 py-1 rounded-full text-xs font-mono font-bold">
+            <span className="text-slate-200">{data.team1_name || "NRG"}</span>
+            <span className="text-white bg-slate-800 px-1.5 py-0.2 rounded">
+              {team1Score}
+            </span>
+            <span className="text-[#00aeef]">:</span>
+            <span className="text-[#00aeef] bg-cyan-950 px-1.5 py-0.2 rounded border border-cyan-800/60">
+              {team2Score}
+            </span>
+            <span className="text-[#00aeef]">{data.team2_name || "Cloud9"}</span>
           </div>
 
           <div
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border font-mono text-[11px] font-semibold ${
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border font-mono text-[10px] font-bold ${
               dataSource === "live"
-                ? "bg-emerald-950/60 text-emerald-300 border-emerald-800"
-                : "bg-slate-800/90 text-cyan-300 border-slate-700"
+                ? "bg-emerald-950/50 text-emerald-300 border-emerald-700/80"
+                : "bg-slate-900/90 text-cyan-300 border-slate-700"
             }`}
           >
             <span
-              className={`w-2 h-2 rounded-full ${
-                dataSource === "live" ? "bg-emerald-400 animate-ping" : "bg-cyan-400"
+              className={`w-1.5 h-1.5 rounded-full ${
+                dataSource === "live" ? "bg-emerald-400 animate-pulse" : "bg-[#00aeef]"
               }`}
             ></span>
-            {dataSource === "live" ? "LIVE TELEMETRY (:8000)" : "BENCHMARK TELEMETRY"}
+            {dataSource === "live" ? "LIVE TELEMETRY" : "BENCHMARK"}
           </div>
         </div>
       </header>
 
-      {/* KPI Overview Metrics */}
-      <section className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-4">
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-            Active Series ID
-          </span>
-          <div className="text-xl font-bold font-mono text-cyan-400 mt-1">
-            #{data.series_id}
+      {/* Main Grid Area */}
+      <main className="flex-1 min-h-0 grid grid-cols-12 gap-5 p-5 overflow-hidden">
+        {/* Left: MinimapReplay Container */}
+        <section className="col-span-7 flex flex-col min-h-0 h-full">
+          <MinimapReplay
+            currentRound={currentRound}
+            totalRounds={totalRounds}
+            mistakes={data.mistakes}
+            kills={activeRoundKills}
+            rounds={activeRounds}
+            onRoundChange={setCurrentRound}
+            selectedMistake={selectedMistake}
+            onSelectMistake={setSelectedMistake}
+            mapName={activeGame?.map_name || "Ascent"}
+            selectedPlayerId={selectedPlayerId}
+            isPlaying={isPlaying}
+            onTogglePlay={togglePlay}
+          />
+        </section>
+
+        {/* Right: Dual Glass Cards */}
+        <section className="col-span-5 flex flex-col min-h-0 h-full space-y-4 overflow-hidden">
+          {/* Card 1: Player Error Tax & Vulnerabilities */}
+          <div className="flex-1 min-h-0 glass-panel rounded-xl p-4 flex flex-col overflow-hidden shadow-xl">
+            <div className="flex-1 min-h-0 overflow-y-auto pr-1">
+              <PlayerReportCards
+                reports={data.player_reports}
+                selectedPlayerId={selectedPlayerId}
+                onSelectPlayer={setSelectedPlayerId}
+              />
+            </div>
           </div>
-          <span className="text-[10px] text-slate-500">
-            Map: {activeGame?.map_name || "Ascent"}
-          </span>
-        </div>
 
-        <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-4">
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-            Analyzed Rounds
-          </span>
-          <div className="text-xl font-bold font-mono text-white mt-1">
-            {totalRounds} Rounds
+          {/* Card 2: Prescribed Team Practice Drills */}
+          <div className="flex-1 min-h-0 glass-panel rounded-xl p-4 flex flex-col overflow-hidden shadow-xl">
+            <div className="flex-1 min-h-0 overflow-y-auto pr-1">
+              <DrillPrescriptions
+                drills={data.prescribed_drills}
+                selectedPlayerId={selectedPlayerId}
+              />
+            </div>
           </div>
-          <span className="text-[10px] text-slate-500">
-            Current: Round {currentRound}
-          </span>
-        </div>
-
-        <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-4">
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-            Mistakes Attributed
-          </span>
-          <div className="text-xl font-bold font-mono text-amber-400 mt-1">
-            {data.total_mistakes_detected} Flaws
-          </div>
-          <span className="text-[10px] text-slate-500">
-            Across {data.player_reports.length} Players
-          </span>
-        </div>
-
-        <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-4">
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-            Cumulative Series xRW Tax
-          </span>
-          <div className="text-xl font-bold font-mono text-rose-400 mt-1">
-            {cumulativeTax} xRW
-          </div>
-          <span className="text-[10px] text-slate-500">
-            Total win probability lost
-          </span>
-        </div>
-      </section>
-
-      {/* Tactical Minimap Replay Component */}
-      <MinimapReplay
-        currentRound={currentRound}
-        totalRounds={totalRounds}
-        mistakes={data.mistakes}
-        kills={activeRoundKills}
-        onRoundChange={setCurrentRound}
-        selectedMistake={selectedMistake}
-        onSelectMistake={setSelectedMistake}
-        mapName={activeGame?.map_name || "Ascent"}
-      />
-
-      {/* Player Error Tax Report Cards */}
-      <PlayerReportCards
-        reports={data.player_reports}
-        selectedPlayerId={selectedPlayerId}
-        onSelectPlayer={setSelectedPlayerId}
-      />
-
-      {/* Prescribed Tactical Training Drills */}
-      <DrillPrescriptions
-        drills={data.prescribed_drills}
-        selectedPlayerId={selectedPlayerId}
-      />
-
-      {/* Footer */}
-      <footer className="text-center py-6 text-xs text-slate-500 border-t border-slate-800/80 mt-4">
-        C9 Oracle Tactical Analytics Engine | Cloud9 Esports x GRID Data Telemetry Pipeline
-      </footer>
-    </main>
+        </section>
+      </main>
+    </div>
   );
 }

@@ -7,6 +7,8 @@ const mockMistakes: AttributedMistake[] = [
   {
     mistake_type: "UNTRADED_FIRST_DEATH",
     player_id: "OXY",
+    player_name: "OXY",
+    character_name: "Jett",
     round_number: 1,
     occurred_at: "2026-11-19T10:00:15Z",
     win_prob_delta: -0.312,
@@ -16,6 +18,8 @@ const mockMistakes: AttributedMistake[] = [
   {
     mistake_type: "ISOLATED_DUEL",
     player_id: "vanity",
+    player_name: "vanity",
+    character_name: "Omen",
     round_number: 2,
     occurred_at: "2026-11-19T10:01:22Z",
     win_prob_delta: -0.245,
@@ -29,6 +33,8 @@ const mockKills: KillEvent[] = [
     event_id: "kill-1",
     killer_id: "zekken",
     victim_id: "OXY",
+    killer_name: "zekken",
+    victim_name: "OXY",
     weapon: "Vandal",
     occurred_at: "2026-11-19T10:00:15Z",
     killer_position: { x: 320, y: 220, z: 0 },
@@ -57,7 +63,7 @@ describe("MinimapReplay Component", () => {
     expect(screen.getByText("Ascent")).toBeInTheDocument();
   });
 
-  it("renders round scrub controls: slider and next/prev buttons", () => {
+  it("renders round scrub controls: slider, next/prev buttons, and play/pause button", () => {
     const handleRoundChange = jest.fn();
     render(
       <MinimapReplay
@@ -75,14 +81,16 @@ describe("MinimapReplay Component", () => {
 
     const prevBtn = screen.getByTestId("prev-round-btn");
     const nextBtn = screen.getByTestId("next-round-btn");
+    const playBtn = screen.getByTestId("play-pause-btn");
     expect(prevBtn).toBeInTheDocument();
     expect(nextBtn).toBeInTheDocument();
+    expect(playBtn).toBeInTheDocument();
 
     const roundDisplay = screen.getByTestId("current-round-display");
     expect(roundDisplay).toHaveTextContent("Round 1 / 24");
   });
 
-  it("handles round changes via scrubber slider and navigation buttons", () => {
+  it("handles round changes via scrubber slider, navigation buttons, and round pills", () => {
     const handleRoundChange = jest.fn();
     render(
       <MinimapReplay
@@ -105,9 +113,13 @@ describe("MinimapReplay Component", () => {
     const nextBtn = screen.getByTestId("next-round-btn");
     fireEvent.click(nextBtn);
     expect(handleRoundChange).toHaveBeenCalledWith(6);
+
+    const round2Pill = screen.getByText("R2");
+    fireEvent.click(round2Pill);
+    expect(handleRoundChange).toHaveBeenCalledWith(2);
   });
 
-  it("renders mistake markers and negative xRW badges for active round", () => {
+  it("renders mistake markers, negative xRW badges, and killfeed for active round", () => {
     const handleRoundChange = jest.fn();
     render(
       <MinimapReplay
@@ -123,9 +135,14 @@ describe("MinimapReplay Component", () => {
     const mistakeMarkers = screen.getAllByTestId("mistake-marker");
     expect(mistakeMarkers.length).toBe(1);
 
-    expect(screen.getByText("OXY")).toBeInTheDocument();
+    expect(screen.getAllByText("OXY").length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText("UNTRADED_FIRST_DEATH")).toBeInTheDocument();
     expect(screen.getByTestId("mistake-xrw-badge")).toHaveTextContent("-31.2% xRW");
+
+    // Killfeed items
+    expect(screen.getByText("zekken")).toBeInTheDocument();
+    expect(screen.getByText(/vandal/i)).toBeInTheDocument();
+    expect(screen.getByText("FB")).toBeInTheDocument();
   });
 
   it("triggers onSelectMistake when a mistake marker is clicked", () => {
@@ -157,7 +174,7 @@ describe("MinimapReplay Component", () => {
         currentRound={15}
         totalRounds={24}
         mistakes={mockMistakes}
-        kills={mockKills}
+        kills={[]}
         onRoundChange={handleRoundChange}
       />
     );
@@ -166,5 +183,41 @@ describe("MinimapReplay Component", () => {
       screen.getByText(/No tactical mistakes attributed in Round 15/i)
     ).toBeInTheDocument();
     expect(screen.queryByTestId("mistake-marker")).not.toBeInTheDocument();
+  });
+
+  it("highlights player actions when selectedPlayerId is provided", () => {
+    const handleRoundChange = jest.fn();
+    render(
+      <MinimapReplay
+        currentRound={1}
+        totalRounds={24}
+        mistakes={mockMistakes}
+        kills={mockKills}
+        onRoundChange={handleRoundChange}
+        selectedPlayerId="OXY"
+      />
+    );
+
+    expect(screen.getByText("Focus: OXY")).toBeInTheDocument();
+  });
+
+  it("handles play/pause toggle callback", () => {
+    const handleTogglePlay = jest.fn();
+    render(
+      <MinimapReplay
+        currentRound={1}
+        totalRounds={24}
+        mistakes={mockMistakes}
+        kills={mockKills}
+        onRoundChange={jest.fn()}
+        isPlaying={false}
+        onTogglePlay={handleTogglePlay}
+      />
+    );
+
+    const playBtn = screen.getByTestId("play-pause-btn");
+    expect(playBtn).toHaveTextContent("Play");
+    fireEvent.click(playBtn);
+    expect(handleTogglePlay).toHaveBeenCalledTimes(1);
   });
 });

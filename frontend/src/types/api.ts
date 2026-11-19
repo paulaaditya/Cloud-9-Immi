@@ -9,6 +9,8 @@ export interface AbilityCast {
   ability_id: string;
   slot: string;
   player_id: string;
+  player_name?: string | null;
+  character_name?: string | null;
   occurred_at: string;
   position?: Vector3D | null;
   view_direction?: Vector3D | null;
@@ -19,6 +21,10 @@ export interface KillEvent {
   event_id: string;
   killer_id: string;
   victim_id: string;
+  player_name?: string | null;
+  character_name?: string | null;
+  killer_name?: string | null;
+  victim_name?: string | null;
   weapon?: string | null;
   occurred_at: string;
   killer_position?: Vector3D | null;
@@ -29,6 +35,7 @@ export interface KillEvent {
 export interface ParsedRound {
   round_number: number;
   winning_team_id?: string | null;
+  round_winner_name?: string | null;
   win_condition?: string | null;
   kills: KillEvent[];
   ability_casts: AbilityCast[];
@@ -46,6 +53,8 @@ export interface ParsedGame {
 export interface AttributedMistake {
   mistake_type: string;
   player_id: string;
+  player_name?: string | null;
+  character_name?: string | null;
   round_number: number;
   occurred_at: string;
   win_prob_delta: number;
@@ -55,6 +64,8 @@ export interface AttributedMistake {
 
 export interface PlayerReportCard {
   player_id: string;
+  player_name?: string | null;
+  character_name?: string | null;
   mistake_count: number;
   cumulative_xrw_tax: number;
   primary_vulnerability: string;
@@ -64,9 +75,30 @@ export interface PlayerReportCard {
 export interface PrescribedDrill {
   drill_name: string;
   target_players: string[];
+  target_player_names?: string[];
   drill_objective: string;
   setup_steps: string[];
   success_criterion: string;
+}
+
+export interface FeaturedSeries {
+  series_id: string;
+  event: string;
+  teams: string;
+  stage?: string;
+  is_cloud9?: boolean;
+  scheduled_start?: string;
+  team1_name?: string;
+  team2_name?: string;
+  is_c9_match?: boolean;
+}
+
+export interface RosterEntry {
+  player_id: string;
+  player_name: string;
+  character_name: string;
+  team_name: string;
+  side?: string;
 }
 
 export interface CoachingReportResponse {
@@ -74,7 +106,10 @@ export interface CoachingReportResponse {
   team1_name: string;
   team2_name: string;
   total_games: number;
+  selected_game_index?: number;
   games: ParsedGame[];
+  roster?: Record<string, RosterEntry>;
+  featured_series?: FeaturedSeries[];
   total_mistakes_detected: number;
   mistakes: AttributedMistake[];
   player_reports: PlayerReportCard[];
