@@ -214,8 +214,9 @@ export default function CoachDashboardPage() {
     async function fetchTelemetry() {
       setIsLoading(true);
       try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
         const response = await fetch(
-          `http://localhost:8000/api/v1/series/${selectedSeriesId}/coaching-report?max_envelopes=2000`,
+          `${apiUrl}/api/v1/series/${selectedSeriesId}/coaching-report?max_envelopes=2000`,
           {
             signal: controller.signal,
           }
