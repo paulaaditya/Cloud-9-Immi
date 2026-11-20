@@ -13,6 +13,7 @@ from typing import Any, Dict, Iterator, List, Optional, Set, Tuple
 
 import numpy as np
 
+from src.scouting.buys import BUY_TYPES, buy_type
 from src.scouting.catalog import load_catalog
 from src.scouting.store import get_series
 from src.scouting.taxonomy import CATEGORIES
@@ -35,10 +36,11 @@ class Filters:
     events: Optional[Set[str]] = None
     exclude_low_rate: bool = False
     last_n_series: Optional[int] = None
+    buys: Optional[Set[str]] = None  # pistol | eco | half | full (this team's buy that round)
 
     def applied(self) -> Dict[str, Any]:
         out: Dict[str, Any] = {}
-        for k in ("maps", "agents", "players", "abilities", "categories", "patches", "events"):
+        for k in ("maps", "agents", "players", "abilities", "categories", "patches", "events", "buys"):
             v = getattr(self, k)
             if v:
                 out[k] = sorted(v)
@@ -59,6 +61,7 @@ class RoundCtx:
     tid: str
     side: str
     players: Dict[str, Dict[str, Any]] = field(default_factory=dict)
+    buy: Optional[str] = None
 
     @property
     def key(self) -> Tuple[str, str, int]:
@@ -99,7 +102,10 @@ def iter_rounds(f: Filters) -> Iterator[RoundCtx]:
                 side = r["sides"][tid]
                 if f.side and side != f.side:
                     continue
-                yield RoundCtx(data, g, r, tid, side, {p["id"]: p for p in r["players"]})
+                buy = buy_type(r, tid)
+                if f.buys and buy not in f.buys:
+                    continue
+                yield RoundCtx(data, g, r, tid, side, {p["id"]: p for p in r["players"]}, buy)
 
 
 # ----------------------------------------------------------------------------- helpers
@@ -437,6 +443,7 @@ def operator_query(f: Filters, limit_points: int = MAX_POINTS) -> Dict[str, Any]
     series_seen: Set[str] = set()
     by_side: Dict[str, Dict[str, int]] = defaultdict(lambda: {"rounds": 0, "with_op": 0})
     by_map: Dict[str, Dict[str, int]] = defaultdict(lambda: {"rounds": 0, "with_op": 0})
+    by_buy: Dict[str, Dict[str, int]] = defaultdict(lambda: {"rounds": 0, "with_op": 0, "op_kills": 0})
     players: Dict[str, Dict[str, Any]] = {}
     kills: List[Dict[str, Any]] = []
     loadouts: List[float] = []
@@ -450,6 +457,8 @@ def operator_query(f: Filters, limit_points: int = MAX_POINTS) -> Dict[str, Any]
         m = ctx.game["map"]
         by_side[ctx.side]["rounds"] += 1
         by_map[m]["rounds"] += 1
+        bb = by_buy[ctx.buy or "unknown"]
+        bb["rounds"] += 1
         if ctx.series.get("low_rate"):
             low_rate_rounds += 1
         if ctx.game.get("bounds"):
@@ -467,6 +476,7 @@ def operator_query(f: Filters, limit_points: int = MAX_POINTS) -> Dict[str, Any]
             rounds_with_op += 1
             by_side[ctx.side]["with_op"] += 1
             by_map[m]["with_op"] += 1
+            bb["with_op"] += 1
             holders_per_round.append(len(holders))
         for p in holders:
             d = players[p["id"]]
@@ -492,6 +502,7 @@ def operator_query(f: Filters, limit_points: int = MAX_POINTS) -> Dict[str, Any]
                 adv = round(math.hypot(k["kx"] - kp["sx"], k["ky"] - kp["sy"]) / 100.0, 1)  # metres from spawn
             if k["kid"] in players:
                 players[k["kid"]]["kills"] += 1
+            bb["op_kills"] += 1
             kills.append(
                 {
                     "x": k["kx"],
@@ -575,6 +586,11 @@ def operator_query(f: Filters, limit_points: int = MAX_POINTS) -> Dict[str, Any]
         },
         "by_side": {s: {**v, "pct": _pct(v["with_op"], v["rounds"])} for s, v in by_side.items()},
         "by_map": [{"map": m, **v, "pct": _pct(v["with_op"], v["rounds"])} for m, v in sorted(by_map.items(), key=lambda kv: -kv[1]["rounds"])],
+        "by_buy": [
+            {"buy": b, **by_buy[b], "pct": _pct(by_buy[b]["with_op"], by_buy[b]["rounds"])}
+            for b in (*BUY_TYPES, "unknown")
+            if b in by_buy
+        ],
         "players": prof,
         "kill_timing": tb,
         "kill_distance_from_spawn_m": {

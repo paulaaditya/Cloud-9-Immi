@@ -3,6 +3,7 @@ from typing import List, Optional, Set
 from fastapi import APIRouter, HTTPException, Query
 
 from src.scouting.aggregate import Filters, operator_query, team_options, utility_query
+from src.scouting.buys import BUY_TYPES
 from src.scouting.catalog import clean_team_name, find_team_ids, load_catalog, team_list
 from src.vlr.client import SOURCE, VlrClient, VlrUnavailable
 
@@ -49,10 +50,15 @@ def _filters(
     events: Optional[str],
     exclude_low_rate: bool,
     last_n_series: Optional[int],
+    buys: Optional[str] = None,
 ) -> Filters:
     if side and side not in ("attacker", "defender"):
         raise HTTPException(status_code=422, detail="side must be 'attacker' or 'defender'")
+    buy_set = _csv(buys)
+    if buy_set and not buy_set <= set(BUY_TYPES):
+        raise HTTPException(status_code=422, detail=f"buys must be a comma list of {', '.join(BUY_TYPES)}")
     return Filters(
+        buys=buy_set,
         team_ids=_team_ids(team),
         maps=_csv(maps),
         side=side,
@@ -103,8 +109,9 @@ def utility(
     events: Optional[str] = Query(None, description="Event names separated by |"),
     exclude_low_rate: bool = False,
     last_n_series: Optional[int] = Query(None, ge=1),
+    buys: Optional[str] = Query(None, description="pistol,eco,half,full (this team's buy in the round)"),
 ):
-    f = _filters(team, maps, side, agents, players, abilities, categories, patches, events, exclude_low_rate, last_n_series)
+    f = _filters(team, maps, side, agents, players, abilities, categories, patches, events, exclude_low_rate, last_n_series, buys)
     return utility_query(f)
 
 
@@ -119,6 +126,7 @@ def operator(
     events: Optional[str] = None,
     exclude_low_rate: bool = False,
     last_n_series: Optional[int] = Query(None, ge=1),
+    buys: Optional[str] = Query(None, description="pistol,eco,half,full (this team's buy in the round)"),
 ):
-    f = _filters(team, maps, side, agents, players, None, None, patches, events, exclude_low_rate, last_n_series)
+    f = _filters(team, maps, side, agents, players, None, None, patches, events, exclude_low_rate, last_n_series, buys)
     return operator_query(f)

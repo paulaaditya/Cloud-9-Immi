@@ -14,7 +14,7 @@ from typing import Any, Dict, Iterable, List, Optional
 from src.config import get_settings
 from src.scouting.extractor import extract_series
 
-CACHE_VERSION = 1
+CACHE_VERSION = 2  # v2 adds per-round position snapshots and the list of players killed
 
 
 def cache_dir() -> pathlib.Path:

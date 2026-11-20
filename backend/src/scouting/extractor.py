@@ -11,6 +11,7 @@ the buy phase (t < 0) are ignored; they are signature abilities, not tactical ut
 import datetime
 import io
 import json
+from bisect import bisect_right
 from typing import Any, Dict, Iterator, List, Optional
 
 import zstandard
@@ -35,6 +36,38 @@ _WANTED = (
 
 MAX_ROUND_SECONDS = 180.0  # ignore anything implausibly late (post-round noise)
 
+# Where every living player stands, sampled at these seconds after freezetime ends (for setups and defaults).
+SNAP_TIMES = (5, 10, 15, 20, 30, 45, 60, 80)
+SNAP_TOLERANCE = 8.0  # a snapshot is kept only if its source event is within this many seconds of the target
+
+
+def _maybe_snapshot(r: Dict[str, Any], e: Dict[str, Any], game_id: Optional[str], t: float) -> None:
+    """Record all living players' positions from the full-roster `seriesState` carried by this event.
+
+    Ability and kill events are frequent, so the nearest one lands within a second or two of each target.
+    Positions of all ten players are stored; `_drop_dead` removes the dead once the round's kills are known
+    (events can reach us out of timestamp order, so we cannot tell who is dead while streaming).
+    """
+    j = bisect_right(SNAP_TIMES, t) - 1  # latest target already reached
+    if j < r["_ns"]:
+        return
+    r["_ns"] = j + 1
+    if t - SNAP_TIMES[j] > SNAP_TOLERANCE:
+        return
+    game = _find_game(e.get("seriesState") or {}, game_id)
+    if not game:
+        return
+    pos: Dict[str, List[float]] = {}
+    for tm in game.get("teams") or []:
+        for p in tm.get("players") or []:
+            pid = str(p.get("id"))
+            pp = p.get("position") or {}
+            x, y = pp.get("x"), pp.get("y")
+            if x is not None and y is not None:
+                pos[pid] = [round(float(x), 1), round(float(y), 1)]
+    if pos:
+        r["snaps"].append({"k": SNAP_TIMES[j], "t": round(t, 2), "p": pos})
+
 
 def _iter_envelopes(path) -> Iterator[Dict[str, Any]]:
     dctx = zstandard.ZstdDecompressor()
@@ -57,6 +90,16 @@ def _secs(a: str, b: str) -> float:
 def _pos2(entity: Optional[Dict[str, Any]]):
     v = _extract_position(entity)
     return (v.x, v.y) if v else (None, None)
+
+
+def _drop_dead(r: Dict[str, Any]) -> None:
+    """Remove from each snapshot the players killed before it (by timestamp), keeping only the living."""
+    died_at: Dict[str, float] = {}
+    for k in r["kills"]:
+        died_at[k["vid"]] = min(k["t"], died_at.get(k["vid"], k["t"]))
+    for s in r["snaps"]:
+        s["p"] = {pid: xy for pid, xy in s["p"].items() if died_at.get(pid, float("inf")) >= s["t"]}
+    r["snaps"] = [s for s in r["snaps"] if s["p"]]
 
 
 def _find_game(series_state: Dict[str, Any], game_id: Optional[str]) -> Optional[Dict[str, Any]]:
@@ -172,6 +215,8 @@ def extract_series(series_id: str) -> Dict[str, Any]:
                         "casts": [],
                         "kills": [],
                         "plant": None,
+                        "snaps": [],
+                        "_ns": 0,
                     }
                 )
 
@@ -201,9 +246,10 @@ def extract_series(series_id: str) -> Dict[str, Any]:
                     t = _secs(at, r["t0"])
                     if t < 0 or t > MAX_ROUND_SECONDS:
                         continue
+                    _maybe_snapshot(r, e, active_game, t)
                     actor = e.get("actor") or {}
                     st = actor.get("state") or {}
-                    ability = (e.get("target") or {}).get("id") or ""
+                    ability =(e.get("target") or {}).get("id") or ""
                     sup = supplements.get(e.get("id", ""))
                     x = y = z = None
                     quality = None
@@ -261,6 +307,7 @@ def extract_series(series_id: str) -> Dict[str, Any]:
                             "first": bool(first),
                         }
                     )
+                    _maybe_snapshot(r, e, active_game, t)
 
                 elif etype == "player-completed-plantBomb":
                     actor = e.get("actor") or {}
@@ -286,6 +333,9 @@ def extract_series(series_id: str) -> Dict[str, Any]:
         g["rounds"] = [r for r in g["rounds"] if r["players"]]
         for i, r in enumerate(g["rounds"], start=1):
             r["n"] = i
+            r.pop("_ns", None)
+            _drop_dead(r)
+            r["snaps"].sort(key=lambda s: s["k"])
         if g["rounds"]:
             out_games.append(g)
 
