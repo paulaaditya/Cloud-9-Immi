@@ -1,5 +1,5 @@
 import pytest
-from src.analytics.mistake_detector import AttributedMistake
+from src.analytics.vlr_mistake_detector import AttributedMistake
 from src.coaching.llm_coach import LLMCoachService, RoundCoachingInsight, COACH_SYSTEM_PROMPT
 from src.coaching.prescription import PrescribedDrill
 from src.models.match_state import ParsedRound

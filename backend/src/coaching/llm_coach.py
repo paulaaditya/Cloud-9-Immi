@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Optional
 import httpx
 from pydantic import BaseModel, Field
 
-from src.analytics.mistake_detector import AttributedMistake
+from src.analytics.vlr_mistake_detector import AttributedMistake
 from src.coaching.prescription import DRILL_CATALOG, PrescribedDrill
 from src.models.match_state import ParsedRound
 from src.models.vlr_models import VLRPlayerStat

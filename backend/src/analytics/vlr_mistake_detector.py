@@ -1,9 +1,67 @@
 import datetime
 from typing import Dict, List, Optional
-from src.analytics.mistake_detector import AttributedMistake, get_agent_role
+from pydantic import BaseModel
 from src.analytics.xrw_model import calculate_xrw
 from src.models.match_state import ParsedRound
 from src.models.vlr_models import VLRPlayerStat
+
+
+class AttributedMistake(BaseModel):
+    mistake_type: str  # UNTRADED_FIRST_DEATH, ISOLATED_DUEL, UTILITY_DELAY
+    player_id: str
+    player_name: Optional[str] = None
+    character_name: Optional[str] = None
+    team_name: Optional[str] = None
+    round_number: int
+    occurred_at: str
+    win_prob_delta: float
+    description: str
+    coaching_fix: str
+
+
+ROLE_MAP = {
+    # Duelists
+    "jett": "duelist",
+    "raze": "duelist",
+    "reyna": "duelist",
+    "phoenix": "duelist",
+    "yoru": "duelist",
+    "neon": "duelist",
+    "iso": "duelist",
+    # Initiators
+    "sova": "initiator",
+    "fade": "initiator",
+    "breach": "initiator",
+    "skye": "initiator",
+    "kayo": "initiator",
+    "kay/o": "initiator",
+    "gekko": "initiator",
+    "tejo": "initiator",
+    # Controllers
+    "omen": "controller",
+    "brimstone": "controller",
+    "viper": "controller",
+    "astra": "controller",
+    "harbor": "controller",
+    "clove": "controller",
+    # Sentinels
+    "killjoy": "sentinel",
+    "cypher": "sentinel",
+    "sage": "sentinel",
+    "chamber": "sentinel",
+    "deadlock": "sentinel",
+    "vyse": "sentinel",
+}
+
+
+def get_agent_role(character_name: Optional[str]) -> str:
+    if not character_name:
+        return "flex"
+    clean = character_name.strip().lower().replace("/", "")
+    for agent, role in ROLE_MAP.items():
+        if agent.replace("/", "") == clean:
+            return role
+    return "flex"
 
 
 def _parse_time_sec(t_str: str) -> float:

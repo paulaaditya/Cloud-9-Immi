@@ -1,18 +1,19 @@
 from collections import Counter
 from typing import Dict, List, Optional
-from pydantic import BaseModel
-from src.analytics.mistake_detector import AttributedMistake
-from src.data.metadata import get_player_name
+from pydantic import BaseModel, Field
+from src.analytics.vlr_mistake_detector import AttributedMistake
 
 
 class PlayerReportCard(BaseModel):
     player_id: str
     player_name: Optional[str] = None
     character_name: Optional[str] = None
+    team_name: Optional[str] = None
     mistake_count: int
     cumulative_xrw_tax: float
     primary_vulnerability: str
     actionable_summary: str
+    mistakes: List[AttributedMistake] = Field(default_factory=list)
 
 
 def build_player_report_cards(
@@ -49,28 +50,31 @@ def build_player_report_cards(
 
         p_name = next((m.player_name for m in p_mistakes if m.player_name), None)
         c_name = next((m.character_name for m in p_mistakes if m.character_name), None)
-        if not p_name:
-            p_name = get_player_name(player_id)
-        if not c_name and roster and player_id in roster:
-            c_name = roster[player_id].get("character_name")
+        t_name = next((m.team_name for m in p_mistakes if m.team_name), None)
 
-        display_name = f"{p_name} ({player_id})" if p_name and p_name != player_id else player_id
+        if roster and player_id in roster:
+            if not p_name:
+                p_name = roster[player_id].get("player_name")
+            if not c_name:
+                c_name = roster[player_id].get("character_name")
+            if not t_name:
+                t_name = roster[player_id].get("team_name")
 
-        actionable_summary = (
-            f"{display_name} incurred {cumulative_xrw_tax:.3f} cumulative xRW tax "
-            f"across {mistake_count} mistakes (primary: {primary_vulnerability}). "
-            f"Actionable fix: {fix_text}"
-        )
+        display_name = p_name or player_id
+
+        actionable_summary = f"{display_name}: {fix_text}"
 
         cards.append(
             PlayerReportCard(
                 player_id=player_id,
                 player_name=p_name or player_id,
                 character_name=c_name,
+                team_name=t_name,
                 mistake_count=mistake_count,
                 cumulative_xrw_tax=cumulative_xrw_tax,
                 primary_vulnerability=primary_vulnerability,
                 actionable_summary=actionable_summary,
+                mistakes=p_mistakes,
             )
         )
 

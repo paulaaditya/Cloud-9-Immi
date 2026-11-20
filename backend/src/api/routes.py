@@ -2,13 +2,11 @@ from typing import Any, Dict, List, Optional
 import httpx
 from fastapi import APIRouter, HTTPException, Query
 
-from src.analytics.mistake_detector import detect_round_mistakes
 from src.analytics.vlr_mistake_detector import detect_vlr_round_mistakes
 from src.coaching.llm_coach import LLMCoachService
 from src.coaching.prescription import generate_prescribed_drills
 from src.coaching.report_card import build_player_report_cards
-from src.data.metadata import get_featured_series, get_series_roster
-from src.data.parser import parse_series
+from src.data.vlr_2026_season import get_2026_matches_catalog
 from src.data.vlr_client import VLRClient
 from src.data.vlr_parser import normalize_vlr_series
 from src.models.vlr_models import VLRPlayerStat
@@ -21,12 +19,12 @@ llm_coach = LLMCoachService(model_backend="mock")
 @router.get("/featured-series", response_model=List[Dict[str, Any]])
 @router.get("/series/featured", response_model=List[Dict[str, Any]])
 def get_featured_series_endpoint():
-    """Return catalog of featured Cloud9 and marquee VCT series matches."""
-    return get_featured_series()
+    """Return catalog of featured 2026 VCT Season matches."""
+    return get_2026_matches_catalog()
 
 
 @router.get("/series/{series_id}/coaching-report")
-def get_coaching_report(
+async def get_coaching_report(
     series_id: str,
     game_index: Optional[int] = Query(
         0, description="Select specific game index (0-based) of the series"
@@ -35,46 +33,9 @@ def get_coaching_report(
         None, description="Limit envelopes for fast demo"
     ),
 ):
-    try:
-        parsed = parse_series(series_id, max_envelopes=max_envelopes)
-    except FileNotFoundError:
-        raise HTTPException(
-            status_code=404, detail=f"Series {series_id} not found in dataset"
-        )
-
-    roster = get_series_roster(series_id)
-
-    # Determine games to analyze based on game_index
-    if game_index is not None and 0 <= game_index < len(parsed.games):
-        target_games = [parsed.games[game_index]]
-        selected_index = game_index
-    else:
-        target_games = parsed.games
-        selected_index = 0
-
-    all_mistakes = []
-    for g in target_games:
-        for r in g.rounds:
-            all_mistakes.extend(
-                detect_round_mistakes(r, series_id=series_id, roster=roster)
-            )
-
-    cards = build_player_report_cards(all_mistakes, roster=roster)
-    drills = generate_prescribed_drills(all_mistakes)
-
-    return {
-        "series_id": parsed.series_id,
-        "team1_name": parsed.team1_name,
-        "team2_name": parsed.team2_name,
-        "total_games": len(parsed.games),
-        "selected_game_index": selected_index,
-        "games": parsed.games,
-        "roster": roster,
-        "total_mistakes_detected": len(all_mistakes),
-        "mistakes": all_mistakes,
-        "player_reports": cards,
-        "prescribed_drills": drills,
-    }
+    """Delegate legacy series route to VLR coaching report."""
+    game_id_str = str((game_index or 0) + 1)
+    return await get_vlr_coaching_report(match_id=series_id, game_id=game_id_str)
 
 
 @router.get("/llm/health")

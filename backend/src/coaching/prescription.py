@@ -1,7 +1,6 @@
 from typing import Dict, List
 from pydantic import BaseModel, Field
-from src.analytics.mistake_detector import AttributedMistake
-from src.data.metadata import get_player_name
+from src.analytics.vlr_mistake_detector import AttributedMistake
 
 
 class PrescribedDrill(BaseModel):
@@ -72,14 +71,14 @@ def generate_prescribed_drills(
     if not mistakes:
         return []
 
-    # Map player_id -> player_name from mistakes or metadata
+    # Map player_id -> player_name from mistakes
     id_to_name: Dict[str, str] = {}
     for m in mistakes:
         if m.player_id:
             if m.player_name:
                 id_to_name[m.player_id] = m.player_name
             elif m.player_id not in id_to_name:
-                id_to_name[m.player_id] = get_player_name(m.player_id)
+                id_to_name[m.player_id] = m.player_id
 
     # Group mistakes by mistake_type
     mistakes_by_type: Dict[str, List[AttributedMistake]] = {}
@@ -92,7 +91,7 @@ def generate_prescribed_drills(
         # Unique players involved in this mistake pattern (preserves order)
         target_players = list(dict.fromkeys(m.player_id for m in type_mistakes))
         target_player_names = [
-            id_to_name.get(pid) or get_player_name(pid) for pid in target_players
+            id_to_name.get(pid, pid) for pid in target_players
         ]
 
         if mistake_type in DRILL_CATALOG:

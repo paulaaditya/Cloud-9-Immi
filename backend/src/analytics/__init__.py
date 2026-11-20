@@ -1,13 +1,13 @@
-from src.analytics.mistake_detector import (
-    AttributedMistake,
-    detect_round_mistakes,
-    parse_iso_time,
-)
 from src.analytics.spatial_math import (
     euclidean_distance_3d,
     is_within_trade_distance,
 )
-from src.analytics.vlr_mistake_detector import detect_vlr_round_mistakes
+from src.analytics.vlr_mistake_detector import (
+    AttributedMistake,
+    ROLE_MAP,
+    detect_vlr_round_mistakes,
+    get_agent_role,
+)
 from src.analytics.xrw_model import (
     ExpectedRoundWinModel,
     RoundStateVector,
@@ -16,9 +16,9 @@ from src.analytics.xrw_model import (
 
 __all__ = [
     "AttributedMistake",
-    "detect_round_mistakes",
+    "ROLE_MAP",
     "detect_vlr_round_mistakes",
-    "parse_iso_time",
+    "get_agent_role",
     "euclidean_distance_3d",
     "is_within_trade_distance",
     "ExpectedRoundWinModel",
