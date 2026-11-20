@@ -8,6 +8,7 @@ import { PlayerReportCards } from "../components/PlayerReportCards";
 import { DrillPrescriptions } from "../components/DrillPrescriptions";
 import { SLMCoachPanel } from "../components/SLMCoachPanel";
 import { Cloud9Logo } from "../components/Cloud9Logo";
+import { GameSelectionTool } from "../components/GameSelectionTool";
 import { getMapDisplayName } from "../lib/mapCoords";
 import { fetchCoachingReport, fetchFeaturedSeries } from "../lib/api";
 import {
@@ -16,35 +17,280 @@ import {
 } from "../types/api";
 
 const DEFAULT_FEATURED_SERIES: FeaturedSeries[] = [
+  // 1. Kickoff Matches (Feb 2026)
+  {
+    series_id: "vlr-c9-lev-kickoff2026",
+    teams: "Cloud9 vs Leviatán",
+    team1_name: "Cloud9",
+    team2_name: "Leviatán",
+    event: "VCT Americas 2026 Kickoff",
+    date: "2026-02-15",
+    map_name: "Icebox",
+    score: "13 - 9",
+    is_cloud9: true,
+  },
+  {
+    series_id: "vlr-c9-sen-kickoff2026",
+    teams: "Cloud9 vs Sentinels",
+    team1_name: "Cloud9",
+    team2_name: "Sentinels",
+    event: "VCT Americas 2026 Kickoff",
+    date: "2026-02-21",
+    map_name: "Ascent",
+    score: "13 - 11",
+    is_cloud9: true,
+  },
+  {
+    series_id: "vlr-nrg-g2-kickoff2026",
+    teams: "NRG vs G2 Esports",
+    team1_name: "NRG",
+    team2_name: "G2 Esports",
+    event: "VCT Americas 2026 Kickoff",
+    date: "2026-02-22",
+    map_name: "Bind",
+    score: "11 - 13",
+    is_cloud9: false,
+  },
+  {
+    series_id: "vlr-sen-100t-kickoff2026",
+    teams: "Sentinels vs 100 Thieves",
+    team1_name: "Sentinels",
+    team2_name: "100 Thieves",
+    event: "VCT Americas 2026 Kickoff",
+    date: "2026-02-28",
+    map_name: "Haven",
+    score: "13 - 8",
+    is_cloud9: false,
+  },
+
+  // 2. Masters Bangkok Matches (March 2026)
+  {
+    series_id: "vlr-c9-geng-bangkok2026",
+    teams: "Cloud9 vs Gen.G",
+    team1_name: "Cloud9",
+    team2_name: "Gen.G",
+    event: "VCT Masters 2026 Bangkok",
+    date: "2026-03-08",
+    map_name: "Lotus",
+    score: "13 - 10",
+    is_cloud9: true,
+  },
+  {
+    series_id: "vlr-sen-th-bangkok2026",
+    teams: "Sentinels vs Team Heretics",
+    team1_name: "Sentinels",
+    team2_name: "Team Heretics",
+    event: "VCT Masters 2026 Bangkok",
+    date: "2026-03-12",
+    map_name: "Sunset",
+    score: "13 - 11",
+    is_cloud9: false,
+  },
+  {
+    series_id: "vlr-fnc-prx-bangkok2026",
+    teams: "Fnatic vs Paper Rex",
+    team1_name: "Fnatic",
+    team2_name: "Paper Rex",
+    event: "VCT Masters 2026 Bangkok",
+    date: "2026-03-15",
+    map_name: "Bind",
+    score: "13 - 9",
+    is_cloud9: false,
+  },
+  {
+    series_id: "vlr-edg-c9-bangkok2026",
+    teams: "EDward Gaming vs Cloud9",
+    team1_name: "EDward Gaming",
+    team2_name: "Cloud9",
+    event: "VCT Masters 2026 Bangkok",
+    date: "2026-03-20",
+    map_name: "Haven",
+    score: "10 - 13",
+    is_cloud9: true,
+  },
+
+  // 3. Americas Stage 1 Matches (April - May 2026)
   {
     series_id: "vlr-c9-sen-2026",
     teams: "Cloud9 vs Sentinels",
+    team1_name: "Cloud9",
+    team2_name: "Sentinels",
     event: "VCT Americas 2026 Stage 1",
+    date: "2026-04-12",
+    map_name: "Ascent",
+    score: "13 - 11",
     is_cloud9: true,
+  },
+  {
+    series_id: "vlr-c9-kru-stage1-2026",
+    teams: "Cloud9 vs KRÜ Esports",
+    team1_name: "Cloud9",
+    team2_name: "KRÜ Esports",
+    event: "VCT Americas 2026 Stage 1",
+    date: "2026-04-19",
+    map_name: "Sunset",
+    score: "13 - 7",
+    is_cloud9: true,
+  },
+  {
+    series_id: "vlr-c9-loud-stage1-2026",
+    teams: "Cloud9 vs LOUD",
+    team1_name: "Cloud9",
+    team2_name: "LOUD",
+    event: "VCT Americas 2026 Stage 1",
+    date: "2026-04-26",
+    map_name: "Split",
+    score: "13 - 8",
+    is_cloud9: true,
+  },
+  {
+    series_id: "vlr-sen-g2-stage1-2026",
+    teams: "Sentinels vs G2 Esports",
+    team1_name: "Sentinels",
+    team2_name: "G2 Esports",
+    event: "VCT Americas 2026 Stage 1",
+    date: "2026-05-02",
+    map_name: "Abyss",
+    score: "13 - 10",
+    is_cloud9: false,
   },
   {
     series_id: "vlr-c9-nrg-2026",
     teams: "Cloud9 vs NRG",
-    event: "VCT Americas 2026 Playoffs",
+    team1_name: "Cloud9",
+    team2_name: "NRG",
+    event: "VCT Americas 2026 Stage 1",
+    date: "2026-05-03",
+    map_name: "Haven",
+    score: "13 - 9",
     is_cloud9: true,
   },
+  {
+    series_id: "vlr-c9-100t-stage1-2026",
+    teams: "Cloud9 vs 100 Thieves",
+    team1_name: "Cloud9",
+    team2_name: "100 Thieves",
+    event: "VCT Americas 2026 Stage 1",
+    date: "2026-05-10",
+    map_name: "Pearl",
+    score: "13 - 11",
+    is_cloud9: true,
+  },
+
+  // 4. Masters Toronto Matches (June 2026)
   {
     series_id: "vlr-c9-fnc-masters2026",
     teams: "Cloud9 vs Fnatic",
-    event: "VCT Masters 2026 Santiago",
+    team1_name: "Cloud9",
+    team2_name: "Fnatic",
+    event: "VCT Masters 2026 Toronto",
+    date: "2026-06-14",
+    map_name: "Bind",
+    score: "13 - 10",
     is_cloud9: true,
   },
   {
+    series_id: "vlr-c9-prx-toronto2026",
+    teams: "Cloud9 vs Paper Rex",
+    team1_name: "Cloud9",
+    team2_name: "Paper Rex",
+    event: "VCT Masters 2026 Toronto",
+    date: "2026-06-20",
+    map_name: "Lotus",
+    score: "13 - 8",
+    is_cloud9: true,
+  },
+  {
+    series_id: "vlr-th-geng-toronto2026",
+    teams: "Team Heretics vs Gen.G",
+    team1_name: "Team Heretics",
+    team2_name: "Gen.G",
+    event: "VCT Masters 2026 Toronto",
+    date: "2026-06-24",
+    map_name: "Ascent",
+    score: "13 - 9",
+    is_cloud9: false,
+  },
+
+  // 5. Americas Stage 2 Matches (July - August 2026)
+  {
+    series_id: "vlr-c9-g2-stage2-2026",
+    teams: "Cloud9 vs G2 Esports",
+    team1_name: "Cloud9",
+    team2_name: "G2 Esports",
+    event: "VCT Americas 2026 Stage 2",
+    date: "2026-07-18",
+    map_name: "Haven",
+    score: "13 - 9",
+    is_cloud9: true,
+  },
+  {
+    series_id: "vlr-c9-lev-stage2-2026",
+    teams: "Cloud9 vs Leviatán",
+    team1_name: "Cloud9",
+    team2_name: "Leviatán",
+    event: "VCT Americas 2026 Stage 2",
+    date: "2026-07-25",
+    map_name: "Sunset",
+    score: "13 - 11",
+    is_cloud9: true,
+  },
+  {
+    series_id: "vlr-c9-sen-stage2-2026",
+    teams: "Cloud9 vs Sentinels",
+    team1_name: "Cloud9",
+    team2_name: "Sentinels",
+    event: "VCT Americas 2026 Stage 2",
+    date: "2026-08-08",
+    map_name: "Ascent",
+    score: "13 - 10",
+    is_cloud9: true,
+  },
+
+  // 6. Champions Paris Matches (August - September 2026)
+  {
     series_id: "vlr-c9-prx-champions2026",
     teams: "Cloud9 vs Paper Rex",
+    team1_name: "Cloud9",
+    team2_name: "Paper Rex",
     event: "VCT Champions 2026 Paris",
+    date: "2026-08-22",
+    map_name: "Lotus",
+    score: "13 - 11",
+    is_cloud9: true,
+  },
+  {
+    series_id: "vlr-c9-vit-champions2026",
+    teams: "Cloud9 vs Team Vitality",
+    team1_name: "Cloud9",
+    team2_name: "Team Vitality",
+    event: "VCT Champions 2026 Paris",
+    date: "2026-08-29",
+    map_name: "Bind",
+    score: "13 - 10",
     is_cloud9: true,
   },
   {
     series_id: "vlr-sen-th-champions2026",
     teams: "Sentinels vs Team Heretics",
-    event: "VCT Champions 2026 Paris Grand Final",
+    team1_name: "Sentinels",
+    team2_name: "Team Heretics",
+    event: "VCT Champions 2026 Paris",
+    date: "2026-09-06",
+    map_name: "Sunset",
+    score: "13 - 11",
     is_cloud9: false,
+  },
+  {
+    series_id: "vlr-c9-fnc-champions2026",
+    teams: "Cloud9 vs Fnatic",
+    team1_name: "Cloud9",
+    team2_name: "Fnatic",
+    event: "VCT Champions 2026 Paris",
+    date: "2026-09-10",
+    map_name: "Haven",
+    score: "13 - 11",
+    is_cloud9: true,
   },
 ];
 
@@ -71,6 +317,7 @@ export default function CoachDashboardPage() {
   const [featuredSeries, setFeaturedSeries] = useState<FeaturedSeries[]>(
     DEFAULT_FEATURED_SERIES
   );
+  const [isGameSelectorOpen, setIsGameSelectorOpen] = useState<boolean>(false);
   const [data, setData] = useState<CoachingReportResponse | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -178,8 +425,34 @@ export default function CoachDashboardPage() {
 
         {/* Center: Series Selector & Map Switcher */}
         <div className="flex items-center gap-3">
+          {/* Game Selection Tool Trigger Button */}
+          <button
+            type="button"
+            onClick={() => setIsGameSelectorOpen(true)}
+            aria-label="Change Match"
+            className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-sky-300 bg-white/90 hover:bg-sky-50 text-slate-900 shadow-sm transition-all group"
+          >
+            <div className="flex flex-col text-left">
+              <span className="text-[9px] uppercase font-black text-[#008cd4] tracking-wider flex items-center gap-1">
+                2026 Match
+                <span className="w-1.5 h-1.5 rounded-full bg-[#008cd4] animate-pulse"></span>
+              </span>
+              <span className="text-xs font-bold text-slate-900 group-hover:text-[#008cd4] transition-colors truncate max-w-[170px]">
+                {featuredSeries.find((s) => s.series_id === selectedSeriesId)?.teams || "Select Match"}
+              </span>
+            </div>
+            <svg
+              className="w-4 h-4 text-slate-400 group-hover:text-[#008cd4] transition-colors shrink-0"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+
           {/* Series Switcher Dropdown */}
-          <div className="flex items-center gap-2 glass-card rounded-lg px-3 py-1.5 text-xs border-sky-200 shadow-sm">
+          <div className="flex items-center gap-2 glass-card rounded-lg px-2.5 py-1.5 text-xs border-sky-200 shadow-sm">
             <span className="text-[10px] text-[#0077b6] uppercase font-bold tracking-wider">
               Series:
             </span>
@@ -189,8 +462,9 @@ export default function CoachDashboardPage() {
               onChange={(e) => {
                 const val = e.target.value;
                 setMatchId(val);
+                setGameIndex(0);
               }}
-              className="bg-transparent text-slate-900 text-xs font-semibold focus:outline-none cursor-pointer"
+              className="bg-transparent text-slate-900 text-xs font-semibold focus:outline-none cursor-pointer max-w-[160px] truncate"
             >
               {featuredSeries.map((s) => (
                 <option key={s.series_id} value={s.series_id} className="bg-white text-slate-900">
@@ -359,6 +633,18 @@ export default function CoachDashboardPage() {
           </section>
         </main>
       ) : null}
+
+      {/* Game Selection Tool Modal with Team, Date, and Event Filters */}
+      <GameSelectionTool
+        isOpen={isGameSelectorOpen}
+        onClose={() => setIsGameSelectorOpen(false)}
+        matches={featuredSeries}
+        selectedSeriesId={selectedSeriesId}
+        onSelectMatch={(seriesId) => {
+          setMatchId(seriesId);
+          setGameIndex(0);
+        }}
+      />
     </div>
   );
 }

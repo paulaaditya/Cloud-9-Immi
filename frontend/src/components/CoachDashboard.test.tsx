@@ -200,6 +200,21 @@ describe("CoachDashboard Layout (Wireframe Specification)", () => {
     expect(screen.getByText(/live telemetry/i)).toBeInTheDocument();
   });
 
+  it("opens game selection tool when match selector trigger is clicked", async () => {
+    await act(async () => {
+      render(<CoachDashboardPage />);
+    });
+
+    const triggerButton = screen.getByRole("button", { name: /change match/i });
+    expect(triggerButton).toBeInTheDocument();
+
+    await act(async () => {
+      fireEvent.click(triggerButton);
+    });
+
+    expect(screen.getByText("2026 VCT Season - Match Selection")).toBeInTheDocument();
+  });
+
   it("renders the 4 distinct layout cards matching the wireframe", async () => {
     await act(async () => {
       render(<CoachDashboardPage />);
