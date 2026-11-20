@@ -226,7 +226,7 @@ git commit -m "refactor(backend): remove legacy grid streamers, parsers, and met
   - `GET /api/v1/vlr/match/{match_id}/round/{round_num}/insight`
   - `GET /api/v1/llm/health`
 
-- [ ] **Step 1: Write test for pure VLR API endpoints**
+- [x] **Step 1: Write test for pure VLR API endpoints**
 
 ```python
 # c9-oracle/backend/tests/test_api_vlr_pure.py
@@ -251,10 +251,10 @@ def test_coaching_report_works_with_2026_match():
     assert len(data["round_insights"]) >= 20
 ```
 
-- [ ] **Step 2: Run test to verify failure or updates**
-- [ ] **Step 3: Update src/api/routes.py**
-- [ ] **Step 4: Run test to verify pass**
-- [ ] **Step 5: Commit**
+- [x] **Step 2: Run test to verify failure or updates**
+- [x] **Step 3: Update src/api/routes.py**
+- [x] **Step 4: Run test to verify pass**
+- [x] **Step 5: Commit**
 
 ```bash
 git add c9-oracle/backend/src/api/routes.py c9-oracle/backend/tests/test_api_vlr_pure.py

@@ -411,7 +411,9 @@ def get_2026_matches_catalog() -> List[Dict[str, Any]]:
                 "date": meta["date"],
                 "scheduled_start": f"{meta['date']}T19:00:00Z",
                 "status": "Completed",
+                "is_cloud9": is_c9,
                 "is_c9_match": is_c9,
+                "event_name": meta["event_name"],
             }
         )
     return catalog

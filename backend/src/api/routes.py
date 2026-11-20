@@ -20,7 +20,17 @@ llm_coach = LLMCoachService(model_backend="mock")
 @router.get("/series/featured", response_model=List[Dict[str, Any]])
 def get_featured_series_endpoint():
     """Return catalog of featured 2026 VCT Season matches."""
-    return get_2026_matches_catalog()
+    catalog = get_2026_matches_catalog()
+    results = []
+    for item in catalog:
+        entry = dict(item)
+        is_c9 = entry.get("is_cloud9", entry.get("is_c9_match", False))
+        entry["is_cloud9"] = is_c9
+        entry["is_c9_match"] = is_c9
+        if isinstance(entry.get("event"), dict):
+            entry["event_name"] = entry["event"].get("name", "")
+        results.append(entry)
+    return results
 
 
 @router.get("/series/{series_id}/coaching-report")
@@ -29,13 +39,16 @@ async def get_coaching_report(
     game_index: Optional[int] = Query(
         0, description="Select specific game index (0-based) of the series"
     ),
-    max_envelopes: Optional[int] = Query(
-        None, description="Limit envelopes for fast demo"
+    target_team: Optional[str] = Query(
+        None, description="Target team name to attribute mistakes for. Defaults to team1."
     ),
 ):
-    """Delegate legacy series route to VLR coaching report."""
+    """Delegate series route directly to VLR coaching report."""
     game_id_str = str((game_index or 0) + 1)
-    return await get_vlr_coaching_report(match_id=series_id, game_id=game_id_str)
+    actual_target_team = target_team if isinstance(target_team, str) else None
+    return await get_vlr_coaching_report(
+        match_id=series_id, game_id=game_id_str, target_team=actual_target_team
+    )
 
 
 @router.get("/llm/health")
@@ -109,7 +122,11 @@ async def get_vlr_coaching_report(
 
     all_mistakes = []
     round_insights = []
-    coach_team = target_team or parsed.team1_name
+    coach_team = (
+        target_team
+        if isinstance(target_team, str) and target_team.strip()
+        else parsed.team1_name
+    )
     if parsed.games:
         game = parsed.games[0]
         for r in game.rounds:
@@ -199,7 +216,11 @@ async def get_vlr_round_insight(
             detail=f"Round {round_num} not found in match {match_id}",
         )
 
-    coach_team = target_team or parsed.team1_name
+    coach_team = (
+        target_team
+        if isinstance(target_team, str) and target_team.strip()
+        else parsed.team1_name
+    )
     round_mistakes = detect_vlr_round_mistakes(
         target_round, player_stats_map, target_team=coach_team
     )
