@@ -4,6 +4,7 @@ from fastapi import APIRouter, HTTPException, Query
 
 from src.ai.gemini import gemini_call
 from src.scouting.card import build_card
+from src.scouting.replay import build_replay, series_for_teams
 from src.scouting.timeout import timeout_advice
 from src.scouting.attack import AT_CHOICES as ATTACK_AT_CHOICES, attack_profile
 from src.scouting.aggregate import Filters, operator_query, team_options, utility_query
@@ -225,3 +226,21 @@ def timeout(
     if ai:
         advice["ai"] = gemini_call(advice)
     return advice
+
+
+@router.get("/teams/{team}/series")
+def team_series(team: str, limit: int = Query(60, ge=1, le=200)):
+    """A team's matches, newest first, with each game's map, for picking a replay."""
+    return series_for_teams(_team_ids(team), limit)
+
+
+@router.get("/series/{series_id}/games/{game_id}/replay")
+def replay(series_id: str, game_id: str):
+    """Positions over time, kills, plants and utility for every round of one game, for the 2D replay."""
+    try:
+        data = build_replay(series_id, game_id)
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail=f"Unknown series: {series_id}")
+    if data is None:
+        raise HTTPException(status_code=404, detail=f"No game {game_id} in series {series_id}")
+    return data

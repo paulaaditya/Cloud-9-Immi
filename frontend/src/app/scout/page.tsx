@@ -143,6 +143,13 @@ export default function ScoutPage() {
             Attack executes
           </Chip>
           <Link
+            href="/scout/replay"
+            className="rounded-full border border-sky-300 bg-white px-3 py-1 text-xs font-bold text-sky-800"
+            title="Round-by-round 2D replay of a match"
+          >
+            2D replay
+          </Link>
+          <Link
             href="/scout/timeout"
             className="rounded-full border border-sky-300 bg-white px-3 py-1 text-xs font-bold text-sky-800"
             title="What to adjust at a timeout, from the opponent's behaviour in the current situation"
@@ -158,7 +165,7 @@ export default function ScoutPage() {
               Counter-card
             </Link>
           )}
-          <Link href="/" className="ml-3 text-xs font-semibold text-sky-700 underline underline-offset-2">
+          <Link href="/coach" className="ml-3 text-xs font-semibold text-sky-700 underline underline-offset-2">
             Post-match coach
           </Link>
         </nav>

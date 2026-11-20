@@ -297,3 +297,52 @@ export const fetchTimeout = (
       `${observed.length ? `&observed=${encodeURIComponent(observed.join(","))}` : ""}${ai ? "&ai=true" : ""}`,
     signal
   );
+
+export interface SeriesRow {
+  series_id: string;
+  date: string;
+  event: string;
+  stage: string;
+  teams: string;
+  games: { game_id: string; number: number; map: string; winner: string | null }[];
+}
+
+export interface ReplayPlayer {
+  id: string;
+  name: string;
+  tid: string;
+  side: "attacker" | "defender";
+  agent: string;
+  loadout: number | null;
+  money: number | null;
+  weapons: string[];
+  op: boolean;
+}
+
+export interface ReplayRound {
+  n: number;
+  sides: Record<string, "attacker" | "defender">;
+  winner: string | null;
+  end: { type: "elimination" | "detonation" | "defuse" | "time" | "unknown"; inferred: boolean };
+  duration: number;
+  plant: { t: number; pid: string; tid: string; x: number; y: number } | null;
+  players: ReplayPlayer[];
+  kills: { t: number; kid: string; vid: string; ktid: string; vtid: string; weapon: string | null; kx: number | null; ky: number | null; vx: number | null; vy: number | null; first: boolean }[];
+  casts: { t: number; pid: string; ability: string; cat: string; x: number; y: number }[];
+  frames: { t: number; p: Record<string, [number, number]> }[];
+}
+
+export interface ReplayData {
+  series_id: string;
+  game_id: string;
+  map: string;
+  bounds: { min: { x: number; y: number }; max: { x: number; y: number } } | null;
+  teams: Record<string, string>;
+  rounds: ReplayRound[];
+}
+
+export const fetchSeries = (teamId: string, signal?: AbortSignal) =>
+  getJson<SeriesRow[]>(`${API_BASE}/api/v1/scout/teams/${encodeURIComponent(teamId)}/series?limit=60`, signal);
+
+export const fetchReplay = (seriesId: string, gameId: string, signal?: AbortSignal) =>
+  getJson<ReplayData>(`${API_BASE}/api/v1/scout/series/${encodeURIComponent(seriesId)}/games/${encodeURIComponent(gameId)}/replay`, signal);

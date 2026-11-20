@@ -44,6 +44,14 @@ function buildLut(): Uint8ClampedArray {
   return lut;
 }
 
+export const MAP_SIZE = SIZE;
+
+/** True when the radar image for this map was validated against telemetry. */
+export function isTrustedMap(map: string): boolean {
+  const cal = CAL[map];
+  return !!cal && cal.score >= MIN_TRUSTED_SCORE;
+}
+
 /** Normalized bounds coordinates -> pixel position on the radar image for this map. */
 export function toPixel(map: string, nx: number, ny: number): [number, number] {
   const cal = CAL[map];
