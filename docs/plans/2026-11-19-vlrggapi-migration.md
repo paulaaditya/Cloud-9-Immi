@@ -1539,11 +1539,11 @@ git commit -m "feat(frontend): integrate vlr individual player stats into player
 
 ### Task 6.1: End-to-End Visual & Interaction Verification
 
-- [ ] **Step 1: Start local backend server with VLR support**
+- [x] **Step 1: Start local backend server with VLR support**
   Run: `c9-oracle\backend\.venv\Scripts\python.exe -m uvicorn src.main:app --port 8000`
-- [ ] **Step 2: Start frontend dev server**
+- [x] **Step 2: Start frontend dev server**
   Run: `npm --prefix c9-oracle\frontend run dev`
-- [ ] **Step 3: Launch browser subagent**
+- [x] **Step 3: Launch browser subagent**
   Subagent navigates to `http://localhost:3000`, verifies match picker loads, selects a match, clicks through rounds 1, 2, and 3, verifies that SLM coaching panel updates dynamically, and confirms no uncaught exceptions in console.
 
 ---
