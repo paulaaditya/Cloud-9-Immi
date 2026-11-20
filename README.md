@@ -2,8 +2,8 @@
 
 C9 Oracle is a scouting tool built for the Cloud9 x JetBrains "Sky's the Limit" 2026 Hackathon, Category 1 (VAL/GC): Tactical Scouting, Utility Placement & Operator Profiler. It reads the official GRID match feeds and turns an opponent's habits into a one-page counter-card a coach can print. It has two parts:
 
-- **Scout** (`/scout`): the scouting engine described below, with the sample size shown on every result.
-- **Post-match coach** (`/`): the original xRW win-probability and micro-mistake analysis, usable for self-scouting. It is described in the second half of this file.
+- **Scout** (`/scout`, with a landing page at `/`): the scouting engine described below, with the sample size shown on every result.
+- **Post-match coach** (`/coach`): the original xRW win-probability and micro-mistake analysis, usable for self-scouting. It is described in the second half of this file.
 
 ### Scout: what it answers
 
@@ -16,11 +16,14 @@ Scout reads the GRID feeds and ability supplements for all 857 VALORANT series (
 | **Defensive setups** | How do they spread their defenders across the sites early in a round? | On Lotus, with 0-1 defenders on Site 1 at about 15 s they won 50% of rounds (70) against 68% with 2+ (28). |
 | **Attack executes** | Where do they plant, how fast, and with what utility? | On Lotus, Site 3 is 35.5% of rounds and Site 2 is their weaker hit (44% won over 25 rounds, against 76% on Site 3). |
 | **Timeout advisor** (`/scout/timeout`) | What should we change before the next rounds? | Enter their map, side, run (for example lost the last two) and recent plants. On Lotus, attacking after a two-round losing run, it expects Site 3 (36.6% of plants, 15 rounds) and flags "3 of the last 4 on Site 3" against 35.5% normally. |
+| **2D replay** (`/scout/replay`) | What actually happened in that round? | Pick any match and map, then step through rounds on the map: player positions over time, kills with lines, the plant, a clickable kill feed and the economy table. Every Scout number can be checked against the rounds behind it. |
 | **Counter-card** (`/scout/card`) | What do we do about them on this map? | One printable page: how to attack them, how to defend against them, and what to do about their Operator. Save it as a PDF from the print dialog. |
 
 The timeout advisor compares how an opponent plays in the current score situation (after losing or winning two or more rounds) with their baseline, and returns up to three adjustments with the rounds behind each. The feed does not say which team called a timeout, so it uses the score situation rather than timeout history. An optional Gemini layer can word the advice as a short timeout call (see below).
 
 Common to every tab: filters (team, map, side, agent, player, patch, buy type, recent matches, and an option to exclude the low-precision VCT Americas 2025 feeds), the rounds and matches behind each number, and a high/medium/low confidence badge. Counter-play lines are frequency based and phrased as leads to confirm in VOD. The approach is described in [docs/METHODOLOGY.md](docs/METHODOLOGY.md).
+
+**About the 2D replay.** Positions come from the game events that carry them (ability casts, damage, kills, item pickups). That is dense in fights, about 27 position frames per round on a sample game with a median gap of 1.2 s, and sparse in quiet stretches, so the viewer interpolates between frames and says so. How a round ended (elimination, detonation, defuse, time) is inferred from the plant, the winner and who died, because the feed's own reason is not kept. The first time a match is opened it is read from the data files (a few seconds) and cached in `.scout-cache/` (git-ignored).
 
 **Limits to know about**
 - The feeds do not record where an ability lands, so heatmaps show where the caster stood. Landing locations are not modeled.
@@ -183,6 +186,8 @@ c9-oracle/
 ---
 
 ## Getting Started
+
+Run the backend and the frontend, then open `http://localhost:3000` (home page), `/scout`, `/scout/timeout`, `/scout/replay` or `/coach`.
 
 ### Prerequisites
 
