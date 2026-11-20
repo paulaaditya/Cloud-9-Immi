@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useCoachStore } from "../store/coachStore";
 import { RoundSelection } from "../components/RoundSelection";
 import { MinimapReplay } from "../components/MinimapReplay";
@@ -9,12 +9,10 @@ import { DrillPrescriptions } from "../components/DrillPrescriptions";
 import { SLMCoachPanel } from "../components/SLMCoachPanel";
 import { Cloud9Logo } from "../components/Cloud9Logo";
 import { getMapDisplayName } from "../lib/mapCoords";
+import { fetchCoachingReport, fetchFeaturedSeries } from "../lib/api";
 import {
-  AttributedMistake,
   CoachingReportResponse,
   FeaturedSeries,
-  RoundCoachingInsight,
-  VLRPlayerStat,
 } from "../types/api";
 
 const DEFAULT_FEATURED_SERIES: FeaturedSeries[] = [
@@ -50,440 +48,6 @@ const DEFAULT_FEATURED_SERIES: FeaturedSeries[] = [
   },
 ];
 
-const MOCK_MISTAKES: AttributedMistake[] = [
-  {
-    mistake_type: "UNTRADED_FIRST_DEATH",
-    player_id: "OXY",
-    player_name: "OXY",
-    character_name: "Jett",
-    team_name: "Cloud9",
-    round_number: 1,
-    occurred_at: "2026-04-12T10:00:15Z",
-    win_prob_delta: -0.312,
-    description: "Untraded opening death with no return trade within 3.0 seconds.",
-    coaching_fix: "Establish buddy-system spacing (< 6 meters) and hold crossfire angles rather than dry-peeking before support utility.",
-  },
-  {
-    mistake_type: "ISOLATED_DUEL",
-    player_id: "vanity",
-    player_name: "vanity",
-    character_name: "Omen",
-    team_name: "Cloud9",
-    round_number: 2,
-    occurred_at: "2026-04-12T10:01:22Z",
-    win_prob_delta: -0.245,
-    description: "Isolated duel in A Main without trade support or escape utility.",
-    coaching_fix: "Anchor crossfire with site partner before initiating contested duel.",
-  },
-  {
-    mistake_type: "UTILITY_DELAY",
-    player_id: "Xeppaa",
-    player_name: "Xeppaa",
-    character_name: "KAY/O",
-    team_name: "Cloud9",
-    round_number: 3,
-    occurred_at: "2026-04-12T10:02:40Z",
-    win_prob_delta: -0.180,
-    description: "Utility delay on site execute flash, leaving duelist exposed.",
-    coaching_fix: "Pre-align flash lineup and pop flash 0.5s before entry contact.",
-  },
-  {
-    mistake_type: "UNTRADED_FIRST_DEATH",
-    player_id: "v1c",
-    player_name: "v1c",
-    character_name: "Sova",
-    team_name: "Cloud9",
-    round_number: 4,
-    occurred_at: "2026-04-12T10:03:18Z",
-    win_prob_delta: -0.295,
-    description: "Untraded opening death on B site defense.",
-    coaching_fix: "Hold defensive angle with secondary partner trade line.",
-  },
-  {
-    mistake_type: "ISOLATED_DUEL",
-    player_id: "moose",
-    player_name: "moose",
-    character_name: "Killjoy",
-    team_name: "Cloud9",
-    round_number: 5,
-    occurred_at: "2026-04-12T10:04:30Z",
-    win_prob_delta: -0.220,
-    description: "Mid lurk caught without line of sight or crossfire.",
-    coaching_fix: "Synchronize lurk timing with main site pressure.",
-  },
-  {
-    mistake_type: "ISOLATED_DUEL",
-    player_id: "TenZ",
-    player_name: "TenZ",
-    character_name: "Omen",
-    team_name: "Sentinels",
-    round_number: 6,
-    occurred_at: "2026-04-12T10:05:22Z",
-    win_prob_delta: -0.235,
-    description: "Caught isolated in A Wine without fallback smoke.",
-    coaching_fix: "Anchor crossfire with site partner.",
-  },
-  {
-    mistake_type: "UNTRADED_FIRST_DEATH",
-    player_id: "OXY",
-    player_name: "OXY",
-    character_name: "Jett",
-    team_name: "Cloud9",
-    round_number: 7,
-    occurred_at: "2026-04-12T10:06:12Z",
-    win_prob_delta: -0.320,
-    description: "Aggressive dry peek into Operator angle at Mid Courtyard.",
-    coaching_fix: "Request drone or flash utility before contesting sniper lane.",
-  },
-  {
-    mistake_type: "UTILITY_DELAY",
-    player_id: "Xeppaa",
-    player_name: "Xeppaa",
-    character_name: "KAY/O",
-    team_name: "Cloud9",
-    round_number: 9,
-    occurred_at: "2026-04-12T10:08:45Z",
-    win_prob_delta: -0.175,
-    description: "Late flash knife deployment after enemy had already secured site footprint.",
-    coaching_fix: "Deploy early suppression pulse during default phase to deny initial map control.",
-  },
-  {
-    mistake_type: "UNTRADED_FIRST_DEATH",
-    player_id: "zekken",
-    player_name: "zekken",
-    character_name: "Raze",
-    team_name: "Sentinels",
-    round_number: 10,
-    occurred_at: "2026-04-12T10:09:50Z",
-    win_prob_delta: -0.280,
-    description: "Untraded death pushing Mid Catwalk during eco round.",
-    coaching_fix: "Maintain discipline on eco rounds and group for trade frags.",
-  },
-  {
-    mistake_type: "UNTRADED_FIRST_DEATH",
-    player_id: "OXY",
-    player_name: "OXY",
-    character_name: "Jett",
-    team_name: "Cloud9",
-    round_number: 12,
-    occurred_at: "2026-04-12T10:11:05Z",
-    win_prob_delta: -0.315,
-    description: "Untraded opening death during B Long retake.",
-    coaching_fix: "Synchronize retake execute on smoke blossom timing with teammates.",
-  },
-];
-
-const MOCK_COACHING_REPORT: CoachingReportResponse = {
-  series_id: "vlr-c9-sen-2026",
-  team1_name: "Cloud9",
-  team2_name: "Sentinels",
-  total_games: 2,
-  selected_game_index: 0,
-  games: [
-    {
-      game_id: "game-1",
-      map_name: "Ascent",
-      rounds: Array.from({ length: 24 }, (_, i) => ({
-        round_number: i + 1,
-        winning_team_id: [1, 2, 4, 6, 7, 9, 11, 13, 14, 16, 18, 22, 24].includes(i + 1) ? "Cloud9" : "Sentinels",
-        round_winner_name: [1, 2, 4, 6, 7, 9, 11, 13, 14, 16, 18, 22, 24].includes(i + 1) ? "Cloud9" : "Sentinels",
-        win_condition: i % 3 === 0 ? "SpikeDefused" : "Elimination",
-        kills: [
-          {
-            event_id: `kill-${i}-1`,
-            killer_id: [1, 2, 4, 6, 7, 9, 11, 13, 14, 16, 18, 22, 24].includes(i + 1) ? "OXY" : "zekken",
-            victim_id: [1, 2, 4, 6, 7, 9, 11, 13, 14, 16, 18, 22, 24].includes(i + 1) ? "zekken" : "OXY",
-            killer_name: [1, 2, 4, 6, 7, 9, 11, 13, 14, 16, 18, 22, 24].includes(i + 1) ? "OXY" : "zekken",
-            victim_name: [1, 2, 4, 6, 7, 9, 11, 13, 14, 16, 18, 22, 24].includes(i + 1) ? "zekken" : "OXY",
-            weapon: "Vandal",
-            occurred_at: `2026-04-12T10:0${i % 10}:15Z`,
-            killer_position: { x: 320, y: 220, z: 0 },
-            victim_position: { x: 290, y: 280, z: 0 },
-            is_first_blood: true,
-          },
-        ],
-        ability_casts: [],
-        spike_planted: i % 2 === 1,
-        spike_planter_id: i % 2 === 1 ? "vanity" : null,
-        spike_plant_time: null,
-      })),
-    },
-    {
-      game_id: "game-2",
-      map_name: "Bind",
-      rounds: Array.from({ length: 22 }, (_, i) => ({
-        round_number: i + 1,
-        winning_team_id: i % 2 === 0 ? "Cloud9" : "Sentinels",
-        round_winner_name: i % 2 === 0 ? "Cloud9" : "Sentinels",
-        win_condition: "Elimination",
-        kills: [],
-        ability_casts: [],
-        spike_planted: false,
-      })),
-    },
-  ],
-  total_mistakes_detected: MOCK_MISTAKES.length,
-  mistakes: MOCK_MISTAKES,
-  player_reports: [
-    {
-      player_id: "OXY",
-      player_name: "OXY",
-      character_name: "Jett",
-      team_name: "Cloud9",
-      mistake_count: 3,
-      cumulative_xrw_tax: -0.947,
-      primary_vulnerability: "UNTRADED_FIRST_DEATH",
-      actionable_summary: "OXY: Establish buddy-system spacing (< 6 meters) and hold crossfire angles rather than dry-peeking before support utility.",
-      mistakes: [MOCK_MISTAKES[0], MOCK_MISTAKES[6], MOCK_MISTAKES[9]],
-    },
-    {
-      player_id: "vanity",
-      player_name: "vanity",
-      character_name: "Omen",
-      team_name: "Cloud9",
-      mistake_count: 1,
-      cumulative_xrw_tax: -0.245,
-      primary_vulnerability: "ISOLATED_DUEL",
-      actionable_summary: "vanity: Anchor crossfire with site partner before initiating contested duel.",
-      mistakes: [MOCK_MISTAKES[1]],
-    },
-    {
-      player_id: "v1c",
-      player_name: "v1c",
-      character_name: "Sova",
-      team_name: "Cloud9",
-      mistake_count: 1,
-      cumulative_xrw_tax: -0.295,
-      primary_vulnerability: "UNTRADED_FIRST_DEATH",
-      actionable_summary: "v1c: Hold defensive angle with secondary partner trade line.",
-      mistakes: [MOCK_MISTAKES[3]],
-    },
-    {
-      player_id: "Xeppaa",
-      player_name: "Xeppaa",
-      character_name: "KAY/O",
-      team_name: "Cloud9",
-      mistake_count: 2,
-      cumulative_xrw_tax: -0.355,
-      primary_vulnerability: "UTILITY_DELAY",
-      actionable_summary: "Xeppaa: Pre-align flash lineup and pop flash 0.5s before entry contact.",
-      mistakes: [MOCK_MISTAKES[2], MOCK_MISTAKES[7]],
-    },
-    {
-      player_id: "moose",
-      player_name: "moose",
-      character_name: "Killjoy",
-      team_name: "Cloud9",
-      mistake_count: 1,
-      cumulative_xrw_tax: -0.220,
-      primary_vulnerability: "ISOLATED_DUEL",
-      actionable_summary: "moose: Synchronize lurk timing with main site pressure.",
-      mistakes: [MOCK_MISTAKES[4]],
-    },
-    {
-      player_id: "TenZ",
-      player_name: "TenZ",
-      character_name: "Omen",
-      team_name: "Sentinels",
-      mistake_count: 1,
-      cumulative_xrw_tax: -0.235,
-      primary_vulnerability: "ISOLATED_DUEL",
-      actionable_summary: "TenZ: Conceal reload timing behind sentinel utility.",
-      mistakes: [MOCK_MISTAKES[5]],
-    },
-    {
-      player_id: "zekken",
-      player_name: "zekken",
-      character_name: "Raze",
-      team_name: "Sentinels",
-      mistake_count: 1,
-      cumulative_xrw_tax: -0.280,
-      primary_vulnerability: "UNTRADED_FIRST_DEATH",
-      actionable_summary: "zekken: Maintain discipline on eco rounds and group for trade frags.",
-      mistakes: [MOCK_MISTAKES[8]],
-    },
-  ],
-  prescribed_drills: [
-    {
-      drill_name: "Buddy-System Contact & Trade Timing 2v2",
-      target_players: ["OXY", "v1c"],
-      target_player_names: ["OXY", "v1c"],
-      drill_objective: "Reinforce sub-6m proximity spacing and synchronized peeking to guarantee trade kills on contact.",
-      setup_steps: [
-        "Pair target players as entry fragger and secondary trader at choke entrance.",
-        "Opponent defender holds an aggressive off-angle.",
-        "Entry initiates contact to draw fire; secondary peeks within 1.0 second.",
-        "Run 10 repetitions per side, alternating roles.",
-      ],
-      success_criterion: "Trade kill completed within 2.0 seconds in at least 80% of repetitions without trader dying untraded.",
-    },
-    {
-      drill_name: "Crossfire & Spacing 2v2",
-      target_players: ["vanity", "moose"],
-      target_player_names: ["vanity", "moose"],
-      drill_objective: "Eliminate isolated solo engagements by anchoring paired crossfire angles.",
-      setup_steps: [
-        "Position two defenders on site in complementary crossfire lines.",
-        "Attackers execute onto site through main choke simultaneously.",
-        "Defenders hold fire until both have confirmed line of sight on target.",
-        "Execute 10 site defense repetitions.",
-      ],
-      success_criterion: "Zero untraded deaths across 10 rounds with confirmed dual-angle engagement.",
-    },
-    {
-      drill_name: "Utility Timing & Flash Synchronization",
-      target_players: ["Xeppaa"],
-      target_player_names: ["Xeppaa"],
-      drill_objective: "Synchronize support flashes and utility usage with entry player contact timing.",
-      setup_steps: [
-        "Support player lines up flash or concussive utility outside target zone.",
-        "Entry player signals 3-second advance countdown.",
-        "Utility detonates 0.5 seconds before entry player exposes to angle.",
-        "Run 10 live-fire clearing repetitions.",
-      ],
-      success_criterion: "Target defender fully blinded or concussed before entry player duel initiation in 90% of reps.",
-    },
-  ],
-  player_stats: {
-    OXY: {
-      player: "OXY",
-      team: "Cloud9",
-      agent: "Jett",
-      k: 26,
-      d: 16,
-      a: 5,
-      acs: 284,
-      adr: 178,
-      fk: 7,
-      fd: 2,
-    },
-    vanity: {
-      player: "vanity",
-      team: "Cloud9",
-      agent: "Omen",
-      k: 15,
-      d: 14,
-      a: 12,
-      acs: 182,
-      adr: 124,
-      fk: 2,
-      fd: 1,
-    },
-    Xeppaa: {
-      player: "Xeppaa",
-      team: "Cloud9",
-      agent: "KAY/O",
-      k: 17,
-      d: 15,
-      a: 14,
-      acs: 205,
-      adr: 138,
-      fk: 3,
-      fd: 2,
-    },
-    moose: {
-      player: "moose",
-      team: "Cloud9",
-      agent: "Killjoy",
-      k: 14,
-      d: 13,
-      a: 6,
-      acs: 170,
-      adr: 118,
-      fk: 1,
-      fd: 1,
-    },
-    v1c: {
-      player: "v1c",
-      team: "Cloud9",
-      agent: "Sova",
-      k: 16,
-      d: 14,
-      a: 10,
-      acs: 195,
-      adr: 130,
-      fk: 2,
-      fd: 1,
-    },
-    TenZ: {
-      player: "TenZ",
-      team: "Sentinels",
-      agent: "Omen",
-      k: 16,
-      d: 17,
-      a: 8,
-      acs: 188,
-      adr: 126,
-      fk: 2,
-      fd: 2,
-    },
-    zekken: {
-      player: "zekken",
-      team: "Sentinels",
-      agent: "Raze",
-      k: 22,
-      d: 18,
-      a: 4,
-      acs: 245,
-      adr: 162,
-      fk: 5,
-      fd: 4,
-    },
-    johnqt: {
-      player: "johnqt",
-      team: "Sentinels",
-      agent: "Cypher",
-      k: 13,
-      d: 17,
-      a: 5,
-      acs: 162,
-      adr: 110,
-      fk: 0,
-      fd: 2,
-    },
-    Sacy: {
-      player: "Sacy",
-      team: "Sentinels",
-      agent: "Sova",
-      k: 12,
-      d: 16,
-      a: 9,
-      acs: 155,
-      adr: 108,
-      fk: 1,
-      fd: 2,
-    },
-    Zellsis: {
-      player: "Zellsis",
-      team: "Sentinels",
-      agent: "Breach",
-      k: 11,
-      d: 18,
-      a: 11,
-      acs: 150,
-      adr: 105,
-      fk: 0,
-      fd: 3,
-    },
-  },
-  round_insights: Array.from({ length: 24 }, (_, i) => ({
-    round_number: i + 1,
-    narrative: `Round ${i + 1} concluded with ${[1, 2, 4, 6, 7, 9, 11, 13, 14, 16, 18, 22, 24].includes(i + 1) ? "Cloud9" : "Sentinels"} victory by ${i % 3 === 0 ? "SpikeDefused" : "Elimination"}.`,
-    blunder_culprit: [1, 2, 4, 6, 7, 9, 11, 13, 14, 16, 18, 22, 24].includes(i + 1) ? "zekken" : "OXY",
-    win_prob_tax: i % 2 === 0 ? -0.24 : -0.18,
-    tactical_directive: i % 2 === 0 ? "Coordinate flash utility with duelist entry." : "Anchor crossfire with site partner.",
-    player_stat_verdict: i % 2 === 0 ? "OXY has 7 FK and 2 FD (284 ACS)." : "vanity has 2 FK and 1 FD (182 ACS).",
-    recommended_drill: {
-      drill_name: "Buddy-System Contact & Trade Timing 2v2",
-      target_players: [i % 2 === 0 ? "OXY" : "vanity"],
-      target_player_names: [i % 2 === 0 ? "OXY" : "vanity"],
-      drill_objective: "Reinforce spacing and instant trade frags.",
-      setup_steps: ["Pair entry fragger with trade partner at choke."],
-      success_criterion: "Trade secured in >= 80% of contacts.",
-    },
-  })),
-};
-
 export default function CoachDashboardPage() {
   const {
     selectedSeriesId,
@@ -494,7 +58,6 @@ export default function CoachDashboardPage() {
     totalRounds,
     selectedMistake,
     selectedRoundInsight,
-    setSeriesId,
     setMatchId,
     setGameIndex,
     setSelectedPlayerId,
@@ -508,94 +71,83 @@ export default function CoachDashboardPage() {
   const [featuredSeries, setFeaturedSeries] = useState<FeaturedSeries[]>(
     DEFAULT_FEATURED_SERIES
   );
-  const [data, setData] = useState<CoachingReportResponse>(MOCK_COACHING_REPORT);
-  const [dataSource, setDataSource] = useState<"live" | "mock">("mock");
+  const [data, setData] = useState<CoachingReportResponse | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Synchronize store selectedRoundInsight with active round insight
   useEffect(() => {
+    if (!data?.round_insights) return;
     const matched =
-      data.round_insights?.find((ri) => ri.round_number === currentRound) || null;
+      data.round_insights.find((ri) => ri.round_number === currentRound) || null;
     setSelectedRoundInsight(matched);
-  }, [currentRound, data.round_insights, setSelectedRoundInsight]);
+  }, [currentRound, data?.round_insights, setSelectedRoundInsight]);
 
-  // Fetch featured series catalog
+  // Fetch featured series catalog on mount
   useEffect(() => {
     let isMounted = true;
-    async function fetchFeatured() {
+    async function loadCatalog() {
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-        const res = await fetch(`${apiUrl}/api/v1/featured-series`);
-        if (res.ok) {
-          const list: FeaturedSeries[] = await res.json();
-          if (isMounted && Array.isArray(list) && list.length > 0) {
-            setFeaturedSeries(list);
-          }
+        const list = await fetchFeaturedSeries();
+        if (isMounted && Array.isArray(list) && list.length > 0) {
+          setFeaturedSeries(list);
         }
       } catch {
-        // Fallback to default series list
+        // Retain default 2026 season catalog
       }
     }
-    fetchFeatured();
+    loadCatalog();
     return () => {
       isMounted = false;
     };
   }, []);
 
   // Fetch coaching report for selected series and game index
-  useEffect(() => {
-    let isMounted = true;
-    const controller = new AbortController();
-
-    async function fetchReport() {
+  const loadReport = useCallback(
+    async (signal?: AbortSignal) => {
+      setIsLoading(true);
+      setError(null);
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-        const url = `${apiUrl}/api/v1/vlr/match/${selectedSeriesId}/coaching-report?game_id=${currentGameIndex + 1}`;
-
-        const res = await fetch(url, { signal: controller.signal });
-        if (res.ok) {
-          const report: CoachingReportResponse = await res.json();
-          if (isMounted) {
-            setData(report);
-            setDataSource("live");
-            const activeMap = report.games?.[currentGameIndex] || report.games?.[0];
-            if (activeMap?.rounds?.length) {
-              setTotalRounds(activeMap.rounds.length);
-            }
-          }
-        } else {
-          if (isMounted) {
-            setData((prev) => ({
-              ...MOCK_COACHING_REPORT,
-              series_id: selectedSeriesId,
-            }));
-            setDataSource("mock");
-          }
+        const report = await fetchCoachingReport(
+          selectedSeriesId,
+          currentGameIndex + 1,
+          signal
+        );
+        setData(report);
+        const activeMap = report.games?.[currentGameIndex] || report.games?.[0];
+        if (activeMap?.rounds?.length) {
+          setTotalRounds(activeMap.rounds.length);
         }
-      } catch {
-        if (isMounted) {
-          setData((prev) => ({
-            ...MOCK_COACHING_REPORT,
-            series_id: selectedSeriesId,
-          }));
-          setDataSource("mock");
+        setIsLoading(false);
+      } catch (err: unknown) {
+        if (err instanceof Error && err.name === "AbortError") {
+          return;
         }
+        const message =
+          err instanceof Error
+            ? err.message
+            : "Failed to load VLR telemetry";
+        setError(message);
+        setIsLoading(false);
       }
-    }
+    },
+    [selectedSeriesId, currentGameIndex, setTotalRounds]
+  );
 
-    fetchReport();
-
+  useEffect(() => {
+    const controller = new AbortController();
+    loadReport(controller.signal);
     return () => {
-      isMounted = false;
       controller.abort();
     };
-  }, [selectedSeriesId, currentGameIndex, setTotalRounds]);
+  }, [loadReport]);
 
   const activeRoundInsight =
-    data.round_insights?.find((ri) => ri.round_number === currentRound) ||
+    data?.round_insights?.find((ri) => ri.round_number === currentRound) ||
     selectedRoundInsight ||
     null;
 
-  const activeGame = data.games?.[currentGameIndex] || data.games?.[0];
+  const activeGame = data?.games?.[currentGameIndex] || data?.games?.[0];
   const activeRounds = activeGame?.rounds || [];
   const activeRoundKills =
     activeRounds.find((r) => r.round_number === currentRound)?.kills || [];
@@ -603,13 +155,13 @@ export default function CoachDashboardPage() {
   // Match score calculation
   const team1Score = activeRounds.filter(
     (r) =>
-      r.winning_team_id === data.team1_name ||
-      r.round_winner_name === data.team1_name
+      r.winning_team_id === data?.team1_name ||
+      r.round_winner_name === data?.team1_name
   ).length;
   const team2Score = activeRounds.filter(
     (r) =>
-      r.winning_team_id === data.team2_name ||
-      r.round_winner_name === data.team2_name
+      r.winning_team_id === data?.team2_name ||
+      r.round_winner_name === data?.team2_name
   ).length;
 
   return (
@@ -650,7 +202,7 @@ export default function CoachDashboardPage() {
 
           {/* Game / Map Switcher Tabs */}
           <div className="flex items-center gap-1.5 bg-white/70 p-1.5 rounded-lg border border-sky-200 shadow-sm">
-            {data.games && data.games.length > 0 ? (
+            {data?.games && data.games.length > 0 ? (
               data.games.map((g, idx) => {
                 const isSelectedMap = idx === currentGameIndex;
                 const formattedMap = getMapDisplayName(g.map_name);
@@ -678,7 +230,7 @@ export default function CoachDashboardPage() {
         {/* Right: Live Match Score Badge & Telemetry State */}
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2 glass-card px-3.5 py-1 rounded-full text-xs font-mono font-bold border-sky-200 shadow-sm">
-            <span className="text-slate-700">{data.team1_name || "Cloud9"}</span>
+            <span className="text-slate-700">{data?.team1_name || "Cloud9"}</span>
             <span className="text-slate-900 bg-sky-100 px-1.5 py-0.2 rounded border border-sky-200">
               {team1Score}
             </span>
@@ -686,100 +238,127 @@ export default function CoachDashboardPage() {
             <span className="text-white bg-[#008cd4] px-1.5 py-0.2 rounded font-bold shadow-[0_0_8px_rgba(0,140,212,0.3)]">
               {team2Score}
             </span>
-            <span className="text-[#0077b6] font-black">{data.team2_name || "Sentinels"}</span>
+            <span className="text-[#0077b6] font-black">{data?.team2_name || "Sentinels"}</span>
           </div>
 
-          <div
-            className={`px-3 py-1 rounded-lg border font-mono text-[10px] font-bold ${
-              dataSource === "live"
-                ? "bg-emerald-50 text-emerald-700 border-emerald-300 shadow-sm"
-                : "bg-sky-50 text-[#0077b6] border-sky-300 shadow-sm"
-            }`}
-          >
-            {dataSource === "live" ? "LIVE TELEMETRY" : "BENCHMARK"}
+          <div className="px-3 py-1 rounded-lg border font-mono text-[10px] font-bold bg-emerald-50 text-emerald-700 border-emerald-300 shadow-sm">
+            LIVE TELEMETRY
           </div>
         </div>
       </header>
 
-      {/* Main Grid Area */}
-      <main className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-12 gap-4 p-3 sm:p-4 overflow-y-auto lg:overflow-hidden">
-        {/* Left Column: Round Selection (top) + Tactical Map (bottom) */}
-        <section
-          aria-label="Round Selection and Tactical Map"
-          className="col-span-12 lg:col-span-7 flex flex-col min-h-0 lg:h-full gap-3.5"
-        >
-          {/* Card 1: Round Selection */}
-          <RoundSelection
-            currentRound={currentRound}
-            totalRounds={totalRounds}
-            onRoundChange={setCurrentRound}
-            isPlaying={isPlaying}
-            onTogglePlay={togglePlay}
-            rounds={activeRounds}
-            mistakes={data.mistakes}
-            mapName={activeGame?.map_name || "Ascent"}
-          />
-
-          {/* Card 2: Tactical Map Replay */}
-          <MinimapReplay
-            currentRound={currentRound}
-            totalRounds={totalRounds}
-            mistakes={data.mistakes}
-            kills={activeRoundKills}
-            rounds={activeRounds}
-            onRoundChange={setCurrentRound}
-            selectedMistake={selectedMistake}
-            onSelectMistake={setSelectedMistake}
-            mapName={activeGame?.map_name || "Ascent"}
-            selectedPlayerId={selectedPlayerId}
-            isPlaying={isPlaying}
-            onTogglePlay={togglePlay}
-            standalone={false}
-          />
-        </section>
-
-        {/* Right Column: SLM Coaching Debrief, Player Error Report & Training Drills */}
-        <section
-          aria-label="Player Error Report and Training Drills"
-          className="col-span-12 lg:col-span-5 flex flex-col min-h-0 lg:h-full gap-3 overflow-y-auto pr-0.5"
-        >
-          {/* SLM Assistant Coach Real-Time Debrief Panel */}
-          <div data-testid="slm-coach-panel-container" className="flex-shrink-0">
-            <SLMCoachPanel
-              insight={activeRoundInsight}
-              roundNumber={currentRound}
+      {/* Main Content Area */}
+      {isLoading && !data ? (
+        <main className="flex-1 min-h-0 flex items-center justify-center p-6">
+          <div
+            data-testid="dashboard-loading"
+            className="glass-panel p-8 rounded-2xl border border-sky-300/40 text-center space-y-3 shadow-xl"
+          >
+            <div className="w-10 h-10 border-4 border-sky-500 border-t-transparent rounded-full animate-spin mx-auto" />
+            <p className="text-slate-800 font-mono text-xs tracking-wider uppercase font-bold">
+              Loading 2026 VCT Telemetry...
+            </p>
+          </div>
+        </main>
+      ) : error && !data ? (
+        <main className="flex-1 min-h-0 flex items-center justify-center p-6">
+          <div
+            data-testid="dashboard-error"
+            className="glass-panel p-8 rounded-2xl border border-red-300 text-center space-y-4 shadow-xl max-w-md"
+          >
+            <p className="text-red-700 font-bold text-sm">{error}</p>
+            <p className="text-slate-500 text-xs">
+              Ensure the C9 Oracle backend is running on port 8000.
+            </p>
+            <button
+              type="button"
+              onClick={() => loadReport()}
+              className="px-4 py-2 bg-[#008cd4] hover:bg-[#0077b6] text-white rounded-lg font-mono text-xs font-bold transition-all shadow"
+            >
+              Retry Telemetry Connection
+            </button>
+          </div>
+        </main>
+      ) : data ? (
+        <main className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-12 gap-4 p-3 sm:p-4 overflow-y-auto lg:overflow-hidden">
+          {/* Left Column: Round Selection (top) + Tactical Map (bottom) */}
+          <section
+            aria-label="Round Selection and Tactical Map"
+            className="col-span-12 lg:col-span-7 flex flex-col min-h-0 lg:h-full gap-3.5"
+          >
+            {/* Card 1: Round Selection */}
+            <RoundSelection
+              currentRound={currentRound}
+              totalRounds={totalRounds}
+              onRoundChange={setCurrentRound}
+              isPlaying={isPlaying}
+              onTogglePlay={togglePlay}
+              rounds={activeRounds}
+              mistakes={data.mistakes}
+              mapName={activeGame?.map_name || "Ascent"}
             />
-          </div>
 
-          {/* Card 1: Player Error Report */}
-          <div
-            data-testid="player-error-report-card"
-            className="flex-1 min-h-[220px] glass-panel rounded-xl p-3.5 sm:p-4 flex flex-col overflow-hidden shadow-lg border border-sky-300/40"
+            {/* Card 2: Tactical Map Replay */}
+            <MinimapReplay
+              currentRound={currentRound}
+              totalRounds={totalRounds}
+              mistakes={data.mistakes}
+              kills={activeRoundKills}
+              rounds={activeRounds}
+              onRoundChange={setCurrentRound}
+              selectedMistake={selectedMistake}
+              onSelectMistake={setSelectedMistake}
+              mapName={activeGame?.map_name || "Ascent"}
+              selectedPlayerId={selectedPlayerId}
+              isPlaying={isPlaying}
+              onTogglePlay={togglePlay}
+              standalone={false}
+            />
+          </section>
+
+          {/* Right Column: SLM Coaching Debrief, Player Error Report & Training Drills */}
+          <section
+            aria-label="Player Error Report and Training Drills"
+            className="col-span-12 lg:col-span-5 flex flex-col min-h-0 lg:h-full gap-3 overflow-y-auto pr-0.5"
           >
-            <div className="flex-1 min-h-0 overflow-y-auto pr-1">
-              <PlayerReportCards
-                reports={data.player_reports}
-                selectedPlayerId={selectedPlayerId}
-                onSelectPlayer={setSelectedPlayerId}
-                playerStats={data.player_stats}
+            {/* SLM Assistant Coach Real-Time Debrief Panel */}
+            <div data-testid="slm-coach-panel-container" className="flex-shrink-0">
+              <SLMCoachPanel
+                insight={activeRoundInsight}
+                roundNumber={currentRound}
               />
             </div>
-          </div>
 
-          {/* Card 2: Training Drills */}
-          <div
-            data-testid="training-drills-card"
-            className="flex-1 min-h-[200px] glass-panel rounded-xl p-3.5 sm:p-4 flex flex-col overflow-hidden shadow-lg border border-sky-300/40"
-          >
-            <div className="flex-1 min-h-0 overflow-y-auto pr-1">
-              <DrillPrescriptions
-                drills={data.prescribed_drills}
-                selectedPlayerId={selectedPlayerId}
-              />
+            {/* Card 1: Player Error Report */}
+            <div
+              data-testid="player-error-report-card"
+              className="flex-1 min-h-[220px] glass-panel rounded-xl p-3.5 sm:p-4 flex flex-col overflow-hidden shadow-lg border border-sky-300/40"
+            >
+              <div className="flex-1 min-h-0 overflow-y-auto pr-1">
+                <PlayerReportCards
+                  reports={data.player_reports}
+                  selectedPlayerId={selectedPlayerId}
+                  onSelectPlayer={setSelectedPlayerId}
+                  playerStats={data.player_stats}
+                />
+              </div>
             </div>
-          </div>
-        </section>
-      </main>
+
+            {/* Card 2: Training Drills */}
+            <div
+              data-testid="training-drills-card"
+              className="flex-1 min-h-[200px] glass-panel rounded-xl p-3.5 sm:p-4 flex flex-col overflow-hidden shadow-lg border border-sky-300/40"
+            >
+              <div className="flex-1 min-h-0 overflow-y-auto pr-1">
+                <DrillPrescriptions
+                  drills={data.prescribed_drills}
+                  selectedPlayerId={selectedPlayerId}
+                />
+              </div>
+            </div>
+          </section>
+        </main>
+      ) : null}
     </div>
   );
 }
