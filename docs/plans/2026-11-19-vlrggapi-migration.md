@@ -1063,7 +1063,7 @@ git commit -m "feat(tuning): add 8gb vram qlora fine-tuning configuration for qw
 - Consumes: `VLRClient`, `normalize_vlr_series`, `detect_vlr_round_mistakes`, `LLMCoachService`
 - Produces: `GET /api/v1/vlr/matches`, `GET /api/v1/vlr/match/{match_id}/coaching-report`, `GET /api/v1/vlr/match/{match_id}/round/{round_num}/insight`
 
-- [ ] **Step 1: Write failing test for VLR coaching report endpoint**
+- [x] **Step 1: Write failing test for VLR coaching report endpoint**
 
 ```python
 # c9-oracle/backend/tests/test_vlr_api_routes.py
@@ -1123,12 +1123,12 @@ def test_vlr_coaching_report_endpoint(mock_details, mock_logs):
     assert "round_insights" in json_data
 ```
 
-- [ ] **Step 2: Run test to verify failure**
+- [x] **Step 2: Run test to verify failure**
 
 Run: `c9-oracle\backend\.venv\Scripts\pytest.exe c9-oracle\backend\tests\test_vlr_api_routes.py`
 Expected: FAIL with 404 Not Found
 
-- [ ] **Step 3: Implement VLR routes in routes.py**
+- [x] **Step 3: Implement VLR routes in routes.py**
 
 ```python
 # Add to c9-oracle/backend/src/api/routes.py
@@ -1205,12 +1205,12 @@ async def get_vlr_coaching_report(
     }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `c9-oracle\backend\.venv\Scripts\pytest.exe c9-oracle\backend\tests\test_vlr_api_routes.py`
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add c9-oracle/backend/src/api/routes.py c9-oracle/backend/tests/test_vlr_api_routes.py
