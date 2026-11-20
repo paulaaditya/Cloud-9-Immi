@@ -7,11 +7,15 @@ import { Cloud9Logo } from "@/components/Cloud9Logo";
 import { MAP_SIZE, isTrustedMap, toPixel } from "@/components/scout/ScoutMap";
 import { Chip, Panel, titleCase } from "@/components/scout/ScoutWidgets";
 import { ReplayData, ReplayRound, SeriesRow, TeamSummary, fetchReplay, fetchSeries, fetchTeams } from "@/lib/scoutApi";
-import { clock, dotsAt, normalise } from "@/lib/replayMath";
+import { clock, dotsAt, normalise, positionAt } from "@/lib/replayMath";
+import { normalizeAgent, preloadImages, useAgentIcons } from "@/lib/agentIcons";
 
 const TEAM_COLORS = ["#0ea5e9", "#f43f5e"];
 const SPEEDS = [1, 2, 4, 8];
 const KILL_LINE_SECONDS = 2.5;
+const AIM_SECONDS = 1.5;
+const SHOT_SECONDS = 0.6;
+const AIM_REACH_CM = 1500;
 const END_LABEL: Record<string, string> = { elimination: "Elim", detonation: "Boom", defuse: "Defuse", time: "Time", unknown: "?" };
 
 function Viewer({ rep }: { rep: ReplayData }) {
@@ -21,8 +25,15 @@ function Viewer({ rep }: { rep: ReplayData }) {
   const [t, setT] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState(2);
+  const [showAim, setShowAim] = useState(true);
   const [img, setImg] = useState<HTMLImageElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const icons = useAgentIcons();
+  const [iconTick, setIconTick] = useState(0);
+  const agentImgs = useMemo(
+    () => preloadImages(icons, rep.rounds.flatMap((r) => r.players.map((p) => p.agent)), () => setIconTick((n) => n + 1)),
+    [icons, rep]
+  );
   const round: ReplayRound = rep.rounds.find((r) => r.n === roundN) ?? rep.rounds[0];
   const players = useMemo(() => Object.fromEntries(round.players.map((p) => [p.id, p])), [round]);
   const trusted = isTrustedMap(rep.map);
@@ -117,24 +128,90 @@ function Viewer({ rep }: { rep: ReplayData }) {
       ctx.globalAlpha = 1;
     }
 
+    if (showAim) {
+      // Where players were facing when they cast an ability (the only place the feed records aim).
+      for (const a of round.aims) {
+        if (t < a.t || t > a.t + AIM_SECONDS) continue;
+        const info = players[a.pid];
+        const pos = info ? positionAt(round, a.pid, t) : null;
+        if (!info || !pos) continue;
+        const from = px(pos[0], pos[1]);
+        const to = px(pos[0] + a.dx * AIM_REACH_CM, pos[1] + a.dy * AIM_REACH_CM);
+        if (!from || !to) continue;
+        const len = Math.hypot(to[0] - from[0], to[1] - from[1]) || 1;
+        const ux = (to[0] - from[0]) / len;
+        const uy = (to[1] - from[1]) / len;
+        const reach = 70;
+        const ang = (Math.PI / 180) * 24;
+        const rot = (x: number, y: number, r: number): [number, number] => [x * Math.cos(r) - y * Math.sin(r), x * Math.sin(r) + y * Math.cos(r)];
+        const l = rot(ux, uy, -ang);
+        const r2 = rot(ux, uy, ang);
+        ctx.globalAlpha = 0.55 * (1 - (t - a.t) / AIM_SECONDS);
+        ctx.fillStyle = colorOf(info.tid);
+        ctx.beginPath();
+        ctx.moveTo(from[0], from[1]);
+        ctx.lineTo(from[0] + l[0] * reach, from[1] + l[1] * reach);
+        ctx.lineTo(from[0] + r2[0] * reach, from[1] + r2[1] * reach);
+        ctx.closePath();
+        ctx.fill();
+        ctx.globalAlpha = 1;
+      }
+      // Shots: attacker to target at the moment of a hit.
+      for (const sh of round.shots) {
+        if (t < sh.t || t > sh.t + SHOT_SECONDS) continue;
+        const ap = positionAt(round, sh.a, sh.t);
+        const vp = positionAt(round, sh.v, sh.t);
+        const a = ap ? px(ap[0], ap[1]) : null;
+        const v = vp ? px(vp[0], vp[1]) : null;
+        if (!a || !v) continue;
+        ctx.globalAlpha = 1 - (t - sh.t) / SHOT_SECONDS;
+        ctx.strokeStyle = "#fde047";
+        ctx.lineWidth = 2;
+        ctx.setLineDash([6, 4]);
+        ctx.beginPath();
+        ctx.moveTo(a[0], a[1]);
+        ctx.lineTo(v[0], v[1]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.globalAlpha = 1;
+      }
+    }
+
     for (const d of dotsAt(round, t)) {
       const p = px(d.xy[0], d.xy[1]);
       const info = players[d.id];
       if (!p || !info) continue;
       const color = colorOf(info.tid);
       if (d.alive) {
+        const icon = agentImgs[normalizeAgent(info.agent)];
         ctx.beginPath();
-        ctx.arc(p[0], p[1], 13, 0, Math.PI * 2);
+        ctx.arc(p[0], p[1], 15, 0, Math.PI * 2);
         ctx.fillStyle = color;
         ctx.fill();
-        ctx.lineWidth = 2;
+        if (icon && icon.complete && icon.naturalWidth > 0) {
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(p[0], p[1], 12, 0, Math.PI * 2);
+          ctx.clip();
+          ctx.drawImage(icon, p[0] - 12, p[1] - 12, 24, 24);
+          ctx.restore();
+        } else {
+          ctx.fillStyle = "#ffffff";
+          ctx.font = "800 12px system-ui, sans-serif";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillText((info.agent || info.name || "?").slice(0, 2).toUpperCase(), p[0], p[1] + 1);
+        }
+        ctx.beginPath();
+        ctx.arc(p[0], p[1], 15, 0, Math.PI * 2);
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = color;
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(p[0], p[1], 13.5, 0, Math.PI * 2);
+        ctx.lineWidth = 1.5;
         ctx.strokeStyle = "#ffffff";
         ctx.stroke();
-        ctx.fillStyle = "#ffffff";
-        ctx.font = "800 12px system-ui, sans-serif";
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillText((info.agent || info.name || "?").slice(0, 2).toUpperCase(), p[0], p[1] + 1);
       } else {
         ctx.strokeStyle = color;
         ctx.globalAlpha = 0.7;
@@ -148,7 +225,7 @@ function Viewer({ rep }: { rep: ReplayData }) {
         ctx.globalAlpha = 1;
       }
     }
-  }, [rep, round, t, img, players, colorOf]);
+  }, [rep, round, t, img, players, colorOf, agentImgs, iconTick, showAim]);
 
   const winnerName = round.winner ? rep.teams[round.winner] : null;
   const kills = [...round.kills].sort((a, b) => a.t - b.t);
@@ -202,6 +279,9 @@ function Viewer({ rep }: { rep: ReplayData }) {
             <span className="w-24 text-right text-sm tabular-nums">
               {clock(t)} / {clock(round.duration)}
             </span>
+            <Chip active={showAim} onClick={() => setShowAim((v) => !v)} title="Facing at ability casts and shots at targets">
+              Aim and shots
+            </Chip>
             <div className="flex gap-1">
               {SPEEDS.map((s) => (
                 <Chip key={s} active={speed === s} onClick={() => setSpeed(s)}>
@@ -212,7 +292,7 @@ function Viewer({ rep }: { rep: ReplayData }) {
           </div>
           {noTrack && <p className="mt-1 text-xs text-amber-700">Few position samples for this round, so players may not move smoothly.</p>}
           {!trusted && <p className="mt-1 text-xs text-slate-500">Radar image is not validated for this map, so a plain grid is shown.</p>}
-          <p className="mt-1 text-[11px] text-slate-500">Positions come from game events, so movement is smooth in fights and estimated in quiet stretches. Yellow square: spike plant. Lines: kills.</p>
+          <p className="mt-1 text-[11px] text-slate-500">Positions come from game events, so movement is smooth in fights and estimated in quiet stretches. Yellow square: spike plant. Solid lines: kills. Yellow dashes: shots at a target. Wedges: where a player faced when casting an ability. The feed records facing only at ability casts, so there is no continuous gun direction.</p>
         </div>
 
         <div className="space-y-3">
@@ -264,6 +344,10 @@ function Viewer({ rep }: { rep: ReplayData }) {
                   .map((p) => (
                     <tr key={p.id} className="border-t border-sky-100">
                       <td className="py-1 font-semibold" style={{ color: colorOf(p.tid) }}>
+                        {icons[normalizeAgent(p.agent)] && (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={icons[normalizeAgent(p.agent)]} alt="" width={20} height={20} className="mr-1 inline-block rounded-full align-middle" />
+                        )}
                         {p.name}
                         <span className="font-normal text-slate-500"> {titleCase(p.agent || "")}</span>
                         <div className="font-normal text-slate-500">{p.weapons.map(titleCase).join(", ") || "none"}</div>

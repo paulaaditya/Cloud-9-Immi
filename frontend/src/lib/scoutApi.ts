@@ -330,6 +330,8 @@ export interface ReplayRound {
   kills: { t: number; kid: string; vid: string; ktid: string; vtid: string; weapon: string | null; kx: number | null; ky: number | null; vx: number | null; vy: number | null; first: boolean }[];
   casts: { t: number; pid: string; ability: string; cat: string; x: number; y: number }[];
   frames: { t: number; p: Record<string, [number, number]> }[];
+  shots: { t: number; a: string; v: string }[];
+  aims: { t: number; pid: string; dx: number; dy: number }[];
 }
 
 export interface ReplayData {

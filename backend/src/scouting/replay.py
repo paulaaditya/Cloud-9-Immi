@@ -14,7 +14,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import zstandard
 
-from src.data.streamer import _resolve_events_path
+from src.data.streamer import _resolve_events_path, load_ability_supplement
 from src.scouting.catalog import clean_team_name, load_catalog
 from src.scouting.extractor import MAX_ROUND_SECONDS, _find_game, _secs
 from src.scouting.store import CACHE_VERSION, cache_dir, get_series
@@ -36,6 +36,7 @@ STRUCTURE_EVENTS = (
 )
 _WANTED = POSITION_EVENTS + STRUCTURE_EVENTS
 BUCKET_SECONDS = 0.5  # frames closer than this are merged (the later one wins)
+SHOT_MERGE_SECONDS = 0.4  # repeated hits from the same attacker on the same target within this are one shot
 
 
 def _iter_lines(path):
@@ -57,15 +58,26 @@ def _positions(game: Dict[str, Any]) -> Dict[str, List[int]]:
     return out
 
 
-def extract_frames(series_id: str) -> Dict[str, Dict[int, List[Dict[str, Any]]]]:
-    """game_id -> round number -> time-ordered frames [{t, p: {player_id: [x, y]}}], t in seconds after freezetime."""
+def extract_frames(series_id: str) -> Dict[str, Dict[int, Dict[str, Any]]]:
+    """game_id -> round number -> {frames, shots, aims}. Times are seconds after freezetime ends.
+
+    frames: [{t, p: {player_id: [x, y]}}]; shots: damage events as attacker -> target; aims: the caster's view
+    direction at an ability cast (the only place the feed records where a player is facing).
+    """
     path = _resolve_events_path(series_id)
     if not path.is_file():
         raise FileNotFoundError(f"Series event file not found for series ID: {series_id}")
-    buckets: Dict[str, Dict[int, Dict[int, Tuple[float, Dict[str, List[int]]]]]] = {}
+    try:
+        supplements = load_ability_supplement(series_id)
+    except FileNotFoundError:
+        supplements = {}
+    buckets: Dict[str, Dict[int, Dict[str, Any]]] = {}
     rounds_in: Dict[str, int] = {}
     t0: Optional[str] = None
     active: Optional[str] = None
+
+    def fresh() -> Dict[str, Any]:
+        return {"f": {}, "s": [], "a": []}
 
     for env in _iter_lines(path):
         at = env.get("occurredAt", "")
@@ -86,7 +98,7 @@ def extract_frames(series_id: str) -> Dict[str, Dict[int, List[Dict[str, Any]]]]
                 continue
             elif et == "game-started-round":
                 rounds_in[active] += 1
-                buckets[active][rounds_in[active]] = {}
+                buckets[active][rounds_in[active]] = fresh()
                 t0 = None
             elif et == "game-!started-round":
                 buckets[active].pop(rounds_in[active], None)
@@ -98,24 +110,53 @@ def extract_frames(series_id: str) -> Dict[str, Dict[int, List[Dict[str, Any]]]]
                 t = _secs(at, t0)
                 if t < 0 or t > MAX_ROUND_SECONDS:
                     continue
+                rb = buckets[active][rounds_in[active]]
                 game = _find_game(e.get("seriesState") or {}, active)
                 pos = _positions(game) if game else {}
                 if pos:
-                    buckets[active][rounds_in[active]][int(t / BUCKET_SECONDS)] = (round(t, 2), pos)
+                    rb["f"][int(t / BUCKET_SECONDS)] = (round(t, 2), pos)
+                if et == "player-damaged-player":
+                    aid = str((e.get("actor") or {}).get("id"))
+                    vid = str((e.get("target") or {}).get("id"))
+                    if aid != "None" and vid != "None":
+                        rb["s"].append({"t": round(t, 2), "a": aid, "v": vid})
+                elif et == "player-used-ability":
+                    view = (((supplements.get(e.get("id", "")) or {}).get("interpolated")) or {}).get("view")
+                    if isinstance(view, dict) and view.get("x") is not None and view.get("y") is not None:
+                        rb["a"].append(
+                            {"t": round(t, 2), "pid": str((e.get("actor") or {}).get("id")), "dx": round(view["x"], 3), "dy": round(view["y"], 3)}
+                        )
 
     return {
-        gid: {n: [{"t": t, "p": p} for _, (t, p) in sorted(b.items())] for n, b in rounds.items()}
+        gid: {
+            n: {"frames": [{"t": t, "p": p} for _, (t, p) in sorted(b["f"].items())], "shots": merge_shots(b["s"]), "aims": sorted(b["a"], key=lambda x: x["t"])}
+            for n, b in rounds.items()
+        }
         for gid, rounds in buckets.items()
     }
+
+
+def merge_shots(shots: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """Collapse a burst of hits from one attacker on one target into a single shot."""
+    out: List[Dict[str, Any]] = []
+    last: Dict[Tuple[str, str], float] = {}
+    for s in sorted(shots, key=lambda x: x["t"]):
+        key = (s["a"], s["v"])
+        if key in last and s["t"] - last[key] <= SHOT_MERGE_SECONDS:
+            last[key] = s["t"]
+            continue
+        last[key] = s["t"]
+        out.append(s)
+    return out
 
 
 def _frames_path(series_id: str):
     d = cache_dir() / "replay"
     d.mkdir(parents=True, exist_ok=True)
-    return d / f"{series_id}.v{CACHE_VERSION}.json"
+    return d / f"{series_id}.v{CACHE_VERSION}.r2.json"
 
 
-def get_frames(series_id: str) -> Dict[str, Dict[int, List[Dict[str, Any]]]]:
+def get_frames(series_id: str) -> Dict[str, Dict[int, Dict[str, Any]]]:
     p = _frames_path(series_id)
     if p.exists():
         try:
@@ -179,7 +220,8 @@ def build_replay(series_id: str, game_id: str) -> Optional[Dict[str, Any]]:
             names[tid] = clean_team_name(nm)
     rounds = []
     for r in game["rounds"]:
-        fr = list(frames_all.get(r["n"], []))
+        rd = frames_all.get(r["n"], {})
+        fr = list(rd.get("frames", []))
         start = {
             p["id"]: [int(round(p["sx"])), int(round(p["sy"]))]
             for p in r["players"]
@@ -202,6 +244,8 @@ def build_replay(series_id: str, game_id: str) -> Optional[Dict[str, Any]]:
                 "kills": r["kills"],
                 "casts": [{k: c[k] for k in ("t", "pid", "ability", "cat", "x", "y")} for c in r["casts"]],
                 "frames": fr,
+                "shots": rd.get("shots", []),
+                "aims": rd.get("aims", []),
             }
         )
     return {
