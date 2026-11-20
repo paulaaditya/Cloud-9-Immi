@@ -3,9 +3,19 @@ from typing import List, Optional, Set
 from fastapi import APIRouter, HTTPException, Query
 
 from src.scouting.aggregate import Filters, operator_query, team_options, utility_query
-from src.scouting.catalog import find_team_ids, load_catalog, team_list
+from src.scouting.catalog import clean_team_name, find_team_ids, load_catalog, team_list
+from src.vlr.client import SOURCE, VlrClient, VlrUnavailable
 
 router = APIRouter(prefix="/api/v1/scout")
+
+_vlr: Optional[VlrClient] = None
+
+
+def get_vlr_client() -> VlrClient:
+    global _vlr
+    if _vlr is None:
+        _vlr = VlrClient()
+    return _vlr
 
 
 def _csv(v: Optional[str]) -> Optional[Set[str]]:
@@ -61,6 +71,17 @@ def _filters(
 def teams(min_series: int = Query(1, ge=1)):
     """Teams in the dataset that can be scouted (most matches first)."""
     return team_list(min_series=min_series)
+
+
+@router.get("/teams/{team}/vlr")
+def vlr_context(team: str, date_start: Optional[str] = Query(None, pattern=r"^\d{4}-\d{2}-\d{2}$")):
+    """VLR.gg map win rates and roster for this team, via a self-hosted vlrggapi. Never raises if VLR is down."""
+    cat = load_catalog()
+    name = clean_team_name(cat.teams[team].get("name", team)) if team in cat.teams else team
+    try:
+        return get_vlr_client().team_profile(name, date_start)
+    except VlrUnavailable as exc:
+        return {"available": False, "source": SOURCE, "query": name, "reason": str(exc)}
 
 
 @router.get("/teams/{team}/options")
