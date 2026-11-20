@@ -268,3 +268,32 @@ export interface CounterCard {
 
 export const fetchCard = (teamId: string, map: string, signal?: AbortSignal) =>
   getJson<CounterCard>(`${API_BASE}/api/v1/scout/teams/${encodeURIComponent(teamId)}/card?maps=${encodeURIComponent(map)}`, signal);
+
+export interface TimeoutAdvice {
+  map: string;
+  opp_side: "attacker" | "defender";
+  streak: number;
+  situation: "behind" | "ahead" | "even";
+  situation_text: string;
+  situation_used: boolean;
+  sites: DefenseSite[];
+  adjustments: { kind: string; text: string; rounds: number; confidence: "high" | "medium" | "low" }[];
+  facts: string[];
+  caveats: string[];
+  ai?: { available: boolean; model?: string; call?: string; priorities?: string[]; reason?: string };
+}
+
+export const fetchTimeout = (
+  teamId: string,
+  map: string,
+  side: "attacker" | "defender",
+  streak: number,
+  observed: string[],
+  ai: boolean,
+  signal?: AbortSignal
+) =>
+  getJson<TimeoutAdvice>(
+    `${API_BASE}/api/v1/scout/teams/${encodeURIComponent(teamId)}/timeout?maps=${encodeURIComponent(map)}&side=${side}&streak=${streak}` +
+      `${observed.length ? `&observed=${encodeURIComponent(observed.join(","))}` : ""}${ai ? "&ai=true" : ""}`,
+    signal
+  );

@@ -28,6 +28,10 @@ class Settings(BaseSettings):
 
     STL_DATA_DIR: Optional[str] = None
 
+    # Optional AI wording layer for the timeout advisor. Leave empty to run fully offline.
+    GEMINI_API_KEY: Optional[str] = None
+    GEMINI_MODEL: str = "gemini-2.5-pro"
+
     @property
     def DATA_DIR(self) -> pathlib.Path:
         raw = self.STL_DATA_DIR or os.environ.get("STL_DATA_DIR")

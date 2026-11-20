@@ -2,7 +2,9 @@ from typing import List, Optional, Set
 
 from fastapi import APIRouter, HTTPException, Query
 
+from src.ai.gemini import gemini_call
 from src.scouting.card import build_card
+from src.scouting.timeout import timeout_advice
 from src.scouting.attack import AT_CHOICES as ATTACK_AT_CHOICES, attack_profile
 from src.scouting.aggregate import Filters, operator_query, team_options, utility_query
 from src.scouting.buys import BUY_TYPES
@@ -197,3 +199,29 @@ def counter_card(
         return build_card(f, name)
     except NeedsOneMap as exc:
         raise HTTPException(status_code=422, detail=str(exc))
+
+
+@router.get("/teams/{team}/timeout")
+def timeout(
+    team: str,
+    maps: str = Query(..., description="Exactly one map, e.g. lotus"),
+    side: str = Query(..., description="The scouted team's side in the next round: attacker | defender"),
+    streak: int = Query(0, ge=-12, le=12, description="Their run going in: +k won the last k rounds, -k lost the last k"),
+    observed: Optional[str] = Query(None, description="Sites they planted in recent rounds, oldest first, e.g. S3,S3,S1"),
+    ai: bool = Query(False, description="Add a Gemini-worded call (needs GEMINI_API_KEY; numbers are checked against the data)"),
+    patches: Optional[str] = None,
+    events: Optional[str] = None,
+    last_n_series: Optional[int] = Query(None, ge=1),
+):
+    """Timeout advisor: up to three adjustments from how this opponent behaves in this situation."""
+    if side not in ("attacker", "defender"):
+        raise HTTPException(status_code=422, detail="side must be 'attacker' or 'defender'")
+    f = _filters(team, maps, None, None, None, None, None, patches, events, False, last_n_series, None)
+    obs = [x.strip() for x in observed.split(",") if x.strip()] if observed else []
+    try:
+        advice = timeout_advice(f, side, streak, obs)
+    except NeedsOneMap as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+    if ai:
+        advice["ai"] = gemini_call(advice)
+    return advice

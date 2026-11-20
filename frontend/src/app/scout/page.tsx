@@ -142,6 +142,13 @@ export default function ScoutPage() {
           <Chip active={mode === "attack"} onClick={() => switchMode("attack")}>
             Attack executes
           </Chip>
+          <Link
+            href="/scout/timeout"
+            className="rounded-full border border-sky-300 bg-white px-3 py-1 text-xs font-bold text-sky-800"
+            title="What to adjust at a timeout, from the opponent's behaviour in the current situation"
+          >
+            Timeout advisor
+          </Link>
           {teamId && filters.maps && !filters.maps.includes(",") && (
             <Link
               href={`/scout/card?team=${encodeURIComponent(teamId)}&map=${encodeURIComponent(filters.maps)}`}

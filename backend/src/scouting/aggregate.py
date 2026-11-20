@@ -9,7 +9,7 @@ import math
 import statistics
 from collections import Counter, defaultdict
 from dataclasses import dataclass, field
-from typing import Any, Dict, Iterator, List, Optional, Set, Tuple
+from typing import Any, Callable, Dict, Iterator, List, Optional, Set, Tuple
 
 import numpy as np
 
@@ -37,6 +37,7 @@ class Filters:
     exclude_low_rate: bool = False
     last_n_series: Optional[int] = None
     buys: Optional[Set[str]] = None  # pistol | eco | half | full (this team's buy that round)
+    round_ok: Optional[Callable[["RoundCtx"], bool]] = None  # extra per-round predicate (e.g. match situation)
 
     def applied(self) -> Dict[str, Any]:
         out: Dict[str, Any] = {}
@@ -105,7 +106,10 @@ def iter_rounds(f: Filters) -> Iterator[RoundCtx]:
                 buy = buy_type(r, tid)
                 if f.buys and buy not in f.buys:
                     continue
-                yield RoundCtx(data, g, r, tid, side, {p["id"]: p for p in r["players"]}, buy)
+                ctx = RoundCtx(data, g, r, tid, side, {p["id"]: p for p in r["players"]}, buy)
+                if f.round_ok and not f.round_ok(ctx):
+                    continue
+                yield ctx
 
 
 # ----------------------------------------------------------------------------- helpers
