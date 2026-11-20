@@ -1236,7 +1236,7 @@ git commit -m "feat(api): expose vlr match catalog and real-time coaching report
 - Consumes: API response models
 - Produces: `VLRPlayerStat`, `RoundCoachingInsight`, extended `CoachingReportResponse` with `player_stats` and `round_insights`
 
-- [ ] **Step 1: Write test for new store actions and state**
+- [x] **Step 1: Write test for new store actions and state**
 
 ```typescript
 // c9-oracle/frontend/src/store/coachStore.test.ts
@@ -1267,12 +1267,12 @@ describe("coachStore VLR extensions", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify failure**
+- [x] **Step 2: Run test to verify failure**
 
 Run: `npm --prefix c9-oracle/frontend test -- src/store/coachStore.test.ts`
 Expected: FAIL (setSelectedRoundInsight / setMatchId not defined)
 
-- [ ] **Step 3: Update api.ts and coachStore.ts**
+- [x] **Step 3: Update api.ts and coachStore.ts**
 
 ```typescript
 // Add to c9-oracle/frontend/src/types/api.ts
@@ -1315,12 +1315,12 @@ export interface RoundCoachingInsight {
 // setSelectedRoundInsight: (insight: RoundCoachingInsight | null) => void;
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `npm --prefix c9-oracle/frontend test -- src/store/coachStore.test.ts`
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add c9-oracle/frontend/src/types/api.ts c9-oracle/frontend/src/store/coachStore.ts c9-oracle/frontend/src/store/coachStore.test.ts
@@ -1339,7 +1339,7 @@ git commit -m "feat(frontend): extend coach store and api types for vlr stats an
 - Consumes: `selectedRoundInsight: RoundCoachingInsight | null`, `currentRound: number`
 - Produces: Visual tactical assistant coach HUD with blunder breakdown, tactical directive, and player stat context.
 
-- [ ] **Step 1: Write test for SLMCoachPanel**
+- [x] **Step 1: Write test for SLMCoachPanel**
 
 ```typescript
 // c9-oracle/frontend/src/components/SLMCoachPanel.test.tsx
@@ -1374,12 +1374,12 @@ describe("SLMCoachPanel", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify failure**
+- [x] **Step 2: Run test to verify failure**
 
 Run: `npm --prefix c9-oracle/frontend test -- src/components/SLMCoachPanel.test.tsx`
 Expected: FAIL (Cannot find module)
 
-- [ ] **Step 3: Implement SLMCoachPanel component**
+- [x] **Step 3: Implement SLMCoachPanel component**
 
 ```tsx
 // c9-oracle/frontend/src/components/SLMCoachPanel.tsx
@@ -1447,12 +1447,12 @@ export function SLMCoachPanel({ insight, roundNumber }: SLMCoachPanelProps) {
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `npm --prefix c9-oracle/frontend test -- src/components/SLMCoachPanel.test.tsx`
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add c9-oracle/frontend/src/components/SLMCoachPanel.tsx c9-oracle/frontend/src/components/SLMCoachPanel.test.tsx
@@ -1471,7 +1471,7 @@ git commit -m "feat(frontend): create slm coaching panel component for real-time
 - Consumes: `player_stats: Record<string, VLRPlayerStat>`, `reportCards: PlayerReportCard[]`
 - Produces: Unified card showing ACS, ADR, KDA, FK/FD differential, and cumulative xRW error tax.
 
-- [ ] **Step 1: Write test for player stats integration**
+- [x] **Step 1: Write test for player stats integration**
 
 ```typescript
 // Add test case to c9-oracle/frontend/src/components/PlayerReportCards.test.tsx
@@ -1508,21 +1508,21 @@ it("renders individual player stats (ACS, ADR, FK/FD) when available", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify failure**
+- [x] **Step 2: Run test to verify failure**
 
 Run: `npm --prefix c9-oracle/frontend test -- src/components/PlayerReportCards.test.tsx`
 Expected: FAIL
 
-- [ ] **Step 3: Update PlayerReportCards.tsx**
+- [x] **Step 3: Update PlayerReportCards.tsx**
 
 Update `PlayerReportCards.tsx` to accept optional `playerStats` prop and render individual stats badges for ACS, ADR, and FK/FD ratio.
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `npm --prefix c9-oracle/frontend test -- src/components/PlayerReportCards.test.tsx`
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add c9-oracle/frontend/src/components/PlayerReportCards.tsx c9-oracle/frontend/src/components/PlayerReportCards.test.tsx
