@@ -4,6 +4,7 @@ from fastapi import APIRouter, HTTPException, Query
 
 from src.scouting.aggregate import Filters, operator_query, team_options, utility_query
 from src.scouting.buys import BUY_TYPES
+from src.scouting.setups import AT_CHOICES, NeedsOneMap, defense_setups
 from src.scouting.catalog import clean_team_name, find_team_ids, load_catalog, team_list
 from src.vlr.client import SOURCE, VlrClient, VlrUnavailable
 
@@ -130,3 +131,26 @@ def operator(
 ):
     f = _filters(team, maps, side, agents, players, None, None, patches, events, exclude_low_rate, last_n_series, buys)
     return operator_query(f)
+
+
+@router.get("/teams/{team}/defense")
+def defense(
+    team: str,
+    maps: str = Query(..., description="Exactly one map, e.g. haven"),
+    at: int = Query(15, description="Seconds after freezetime to read the setup: 10, 15 or 20"),
+    agents: Optional[str] = None,
+    players: Optional[str] = None,
+    patches: Optional[str] = None,
+    events: Optional[str] = None,
+    exclude_low_rate: bool = False,
+    last_n_series: Optional[int] = Query(None, ge=1),
+    buys: Optional[str] = Query(None, description="pistol,eco,half,full (this team's buy in the round)"),
+):
+    """Defender setups: how many players hold each site early in the round, with win rates."""
+    if at not in AT_CHOICES:
+        raise HTTPException(status_code=422, detail=f"at must be one of {list(AT_CHOICES)}")
+    f = _filters(team, maps, "defender", agents, players, None, None, patches, events, exclude_low_rate, last_n_series, buys)
+    try:
+        return defense_setups(f, at=float(at))
+    except NeedsOneMap as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
