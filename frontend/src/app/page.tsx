@@ -1,22 +1,33 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useCoachStore } from "@/store/coachStore";
-import { MinimapReplay } from "@/components/MinimapReplay";
-import { PlayerReportCards } from "@/components/PlayerReportCards";
-import { DrillPrescriptions } from "@/components/DrillPrescriptions";
-import { Cloud9Logo } from "@/components/Cloud9Logo";
-import { getMapDisplayName } from "@/lib/mapCoords";
+import { useCoachStore } from "../store/coachStore";
+import { RoundSelection } from "../components/RoundSelection";
+import { MinimapReplay } from "../components/MinimapReplay";
+import { PlayerReportCards } from "../components/PlayerReportCards";
+import { DrillPrescriptions } from "../components/DrillPrescriptions";
+import { SLMCoachPanel } from "../components/SLMCoachPanel";
+import { Cloud9Logo } from "../components/Cloud9Logo";
+import { getMapDisplayName } from "../lib/mapCoords";
 import {
+  AttributedMistake,
   CoachingReportResponse,
   FeaturedSeries,
-} from "@/types/api";
+  RoundCoachingInsight,
+  VLRPlayerStat,
+} from "../types/api";
 
 const DEFAULT_FEATURED_SERIES: FeaturedSeries[] = [
   {
     series_id: "2748746",
     teams: "NRG vs Cloud9",
     event: "VCT Americas Stage 1",
+    is_cloud9: true,
+  },
+  {
+    series_id: "vlr-773435",
+    teams: "Cloud9 vs NRG (VLR Live)",
+    event: "VCT Americas",
     is_cloud9: true,
   },
   {
@@ -36,6 +47,129 @@ const DEFAULT_FEATURED_SERIES: FeaturedSeries[] = [
     teams: "Evil Geniuses vs LOUD",
     event: "VCT Americas Stage 1",
     is_cloud9: false,
+  },
+];
+
+const MOCK_MISTAKES: AttributedMistake[] = [
+  {
+    mistake_type: "UNTRADED_FIRST_DEATH",
+    player_id: "OXY",
+    player_name: "OXY",
+    character_name: "Jett",
+    team_name: "Cloud9",
+    round_number: 1,
+    occurred_at: "2026-11-19T10:00:15Z",
+    win_prob_delta: -0.312,
+    description: "Untraded opening death with no return trade within 3.0 seconds.",
+    coaching_fix: "Establish buddy-system spacing (< 6 meters) and hold crossfire angles rather than dry-peeking before support utility.",
+  },
+  {
+    mistake_type: "ISOLATED_DUEL",
+    player_id: "vanity",
+    player_name: "vanity",
+    character_name: "Omen",
+    team_name: "Cloud9",
+    round_number: 2,
+    occurred_at: "2026-11-19T10:01:22Z",
+    win_prob_delta: -0.245,
+    description: "Isolated duel in A Main without trade support or escape utility.",
+    coaching_fix: "Anchor crossfire with site partner before initiating contested duel.",
+  },
+  {
+    mistake_type: "UTILITY_DELAY",
+    player_id: "Xeppaa",
+    player_name: "Xeppaa",
+    character_name: "Fade",
+    team_name: "Cloud9",
+    round_number: 3,
+    occurred_at: "2026-11-19T10:02:40Z",
+    win_prob_delta: -0.180,
+    description: "Utility delay on site execute flash, leaving duelist exposed.",
+    coaching_fix: "Pre-align flash lineup and pop flash 0.5s before entry contact.",
+  },
+  {
+    mistake_type: "UNTRADED_FIRST_DEATH",
+    player_id: "runi",
+    player_name: "runi",
+    character_name: "Sova",
+    team_name: "Cloud9",
+    round_number: 4,
+    occurred_at: "2026-11-19T10:03:18Z",
+    win_prob_delta: -0.295,
+    description: "Untraded opening death on B site defense.",
+    coaching_fix: "Hold defensive angle with secondary partner trade line.",
+  },
+  {
+    mistake_type: "ISOLATED_DUEL",
+    player_id: "moose",
+    player_name: "moose",
+    character_name: "Cypher",
+    team_name: "Cloud9",
+    round_number: 5,
+    occurred_at: "2026-11-19T10:04:30Z",
+    win_prob_delta: -0.220,
+    description: "Mid lurk caught without line of sight or crossfire.",
+    coaching_fix: "Synchronize lurk timing with main site pressure.",
+  },
+  {
+    mistake_type: "ISOLATED_DUEL",
+    player_id: "crashies",
+    player_name: "crashies",
+    character_name: "Sova",
+    team_name: "NRG",
+    round_number: 6,
+    occurred_at: "2026-11-19T10:05:22Z",
+    win_prob_delta: -0.235,
+    description: "Caught reloading in B Main without cover or fallback trade angle.",
+    coaching_fix: "Conceal reload timing behind sentinel utility.",
+  },
+  {
+    mistake_type: "UNTRADED_FIRST_DEATH",
+    player_id: "OXY",
+    player_name: "OXY",
+    character_name: "Jett",
+    team_name: "Cloud9",
+    round_number: 7,
+    occurred_at: "2026-11-19T10:06:12Z",
+    win_prob_delta: -0.320,
+    description: "Aggressive dry peek into Operator angle at Mid Courtyard.",
+    coaching_fix: "Request drone or flash utility before contesting sniper lane.",
+  },
+  {
+    mistake_type: "UTILITY_DELAY",
+    player_id: "Xeppaa",
+    player_name: "Xeppaa",
+    character_name: "Fade",
+    team_name: "Cloud9",
+    round_number: 9,
+    occurred_at: "2026-11-19T10:08:45Z",
+    win_prob_delta: -0.175,
+    description: "Late recon dart deployment after enemy had already secured site footprint.",
+    coaching_fix: "Deploy early recon pulse during default phase to deny initial map control.",
+  },
+  {
+    mistake_type: "UNTRADED_FIRST_DEATH",
+    player_id: "Victor",
+    player_name: "Victor",
+    character_name: "Killjoy",
+    team_name: "NRG",
+    round_number: 10,
+    occurred_at: "2026-11-19T10:09:50Z",
+    win_prob_delta: -0.280,
+    description: "Untraded death pushing Mid Catwalk during eco round.",
+    coaching_fix: "Maintain discipline on eco rounds and group for trade frags.",
+  },
+  {
+    mistake_type: "UNTRADED_FIRST_DEATH",
+    player_id: "OXY",
+    player_name: "OXY",
+    character_name: "Jett",
+    team_name: "Cloud9",
+    round_number: 12,
+    occurred_at: "2026-11-19T10:11:05Z",
+    win_prob_delta: -0.315,
+    description: "Untraded opening death during B Long retake.",
+    coaching_fix: "Synchronize retake execute on smoke blossom timing with teammates.",
   },
 ];
 
@@ -88,142 +222,85 @@ const MOCK_COACHING_REPORT: CoachingReportResponse = {
       })),
     },
   ],
-  total_mistakes_detected: 8,
-  mistakes: [
-    {
-      mistake_type: "UNTRADED_FIRST_DEATH",
-      player_id: "OXY",
-      player_name: "OXY",
-      character_name: "Jett",
-      round_number: 1,
-      occurred_at: "2026-11-19T10:00:15Z",
-      win_prob_delta: -0.312,
-      description: "Untraded opening death with no return trade within 3.0 seconds.",
-      coaching_fix: "Establish buddy-system spacing (< 6 meters) and hold crossfire angles rather than dry-peeking before support utility.",
-    },
-    {
-      mistake_type: "ISOLATED_DUEL",
-      player_id: "vanity",
-      player_name: "vanity",
-      character_name: "Omen",
-      round_number: 2,
-      occurred_at: "2026-11-19T10:01:22Z",
-      win_prob_delta: -0.245,
-      description: "Isolated duel in A Main without trade support or escape utility.",
-      coaching_fix: "Anchor crossfire with site partner before initiating contested duel.",
-    },
-    {
-      mistake_type: "UTILITY_DELAY",
-      player_id: "Xeppaa",
-      player_name: "Xeppaa",
-      character_name: "Fade",
-      round_number: 3,
-      occurred_at: "2026-11-19T10:02:40Z",
-      win_prob_delta: -0.180,
-      description: "Utility delay on site execute flash, leaving duelist exposed.",
-      coaching_fix: "Pre-align flash lineup and pop flash 0.5s before entry contact.",
-    },
-    {
-      mistake_type: "UNTRADED_FIRST_DEATH",
-      player_id: "runi",
-      player_name: "runi",
-      character_name: "Sova",
-      round_number: 4,
-      occurred_at: "2026-11-19T10:03:18Z",
-      win_prob_delta: -0.295,
-      description: "Untraded opening death on B site defense.",
-      coaching_fix: "Hold defensive angle with secondary partner trade line.",
-    },
-    {
-      mistake_type: "ISOLATED_DUEL",
-      player_id: "moose",
-      player_name: "moose",
-      character_name: "Cypher",
-      round_number: 5,
-      occurred_at: "2026-11-19T10:04:30Z",
-      win_prob_delta: -0.220,
-      description: "Mid lurk caught without line of sight or crossfire.",
-      coaching_fix: "Synchronize lurk timing with main site pressure.",
-    },
-    {
-      mistake_type: "UNTRADED_FIRST_DEATH",
-      player_id: "OXY",
-      player_name: "OXY",
-      character_name: "Jett",
-      round_number: 7,
-      occurred_at: "2026-11-19T10:06:12Z",
-      win_prob_delta: -0.320,
-      description: "Aggressive dry peek into Operator angle at Mid Courtyard.",
-      coaching_fix: "Request drone or flash utility before contesting sniper lane.",
-    },
-    {
-      mistake_type: "UTILITY_DELAY",
-      player_id: "Xeppaa",
-      player_name: "Xeppaa",
-      character_name: "Fade",
-      round_number: 9,
-      occurred_at: "2026-11-19T10:08:45Z",
-      win_prob_delta: -0.175,
-      description: "Late recon dart deployment after enemy had already secured site footprint.",
-      coaching_fix: "Deploy early recon pulse during default phase to deny initial map control.",
-    },
-    {
-      mistake_type: "UNTRADED_FIRST_DEATH",
-      player_id: "OXY",
-      player_name: "OXY",
-      character_name: "Jett",
-      round_number: 12,
-      occurred_at: "2026-11-19T10:11:05Z",
-      win_prob_delta: -0.315,
-      description: "Untraded opening death during B Long retake.",
-      coaching_fix: "Synchronize retake execute on smoke blossom timing with teammates.",
-    },
-  ],
+  total_mistakes_detected: MOCK_MISTAKES.length,
+  mistakes: MOCK_MISTAKES,
   player_reports: [
     {
       player_id: "OXY",
       player_name: "OXY",
       character_name: "Jett",
+      team_name: "Cloud9",
       mistake_count: 3,
       cumulative_xrw_tax: -0.947,
       primary_vulnerability: "UNTRADED_FIRST_DEATH",
-      actionable_summary: "Player OXY incurred -0.947 cumulative xRW tax across 3 mistakes (primary: UNTRADED_FIRST_DEATH). Actionable fix: Establish buddy-system spacing (< 6 meters) and hold crossfire angles rather than dry-peeking before support utility.",
+      actionable_summary: "OXY: Establish buddy-system spacing (< 6 meters) and hold crossfire angles rather than dry-peeking before support utility.",
+      mistakes: [MOCK_MISTAKES[0], MOCK_MISTAKES[6], MOCK_MISTAKES[9]],
     },
     {
       player_id: "vanity",
       player_name: "vanity",
       character_name: "Omen",
+      team_name: "Cloud9",
       mistake_count: 1,
       cumulative_xrw_tax: -0.245,
       primary_vulnerability: "ISOLATED_DUEL",
-      actionable_summary: "Player vanity incurred -0.245 cumulative xRW tax across 1 mistakes (primary: ISOLATED_DUEL). Actionable fix: Anchor crossfire with site partner before initiating contested duel.",
+      actionable_summary: "vanity: Anchor crossfire with site partner before initiating contested duel.",
+      mistakes: [MOCK_MISTAKES[1]],
     },
     {
       player_id: "runi",
       player_name: "runi",
       character_name: "Sova",
+      team_name: "Cloud9",
       mistake_count: 1,
       cumulative_xrw_tax: -0.295,
       primary_vulnerability: "UNTRADED_FIRST_DEATH",
-      actionable_summary: "Player runi incurred -0.295 cumulative xRW tax across 1 mistakes (primary: UNTRADED_FIRST_DEATH). Actionable fix: Hold defensive angle with secondary partner trade line.",
+      actionable_summary: "runi: Hold defensive angle with secondary partner trade line.",
+      mistakes: [MOCK_MISTAKES[3]],
     },
     {
       player_id: "Xeppaa",
       player_name: "Xeppaa",
       character_name: "Fade",
+      team_name: "Cloud9",
       mistake_count: 2,
       cumulative_xrw_tax: -0.355,
       primary_vulnerability: "UTILITY_DELAY",
-      actionable_summary: "Player Xeppaa incurred -0.355 cumulative xRW tax across 2 mistakes (primary: UTILITY_DELAY). Actionable fix: Pre-align flash lineup and pop flash 0.5s before entry contact.",
+      actionable_summary: "Xeppaa: Pre-align flash lineup and pop flash 0.5s before entry contact.",
+      mistakes: [MOCK_MISTAKES[2], MOCK_MISTAKES[7]],
     },
     {
       player_id: "moose",
       player_name: "moose",
       character_name: "Cypher",
+      team_name: "Cloud9",
       mistake_count: 1,
       cumulative_xrw_tax: -0.220,
       primary_vulnerability: "ISOLATED_DUEL",
-      actionable_summary: "Player moose incurred -0.220 cumulative xRW tax across 1 mistakes (primary: ISOLATED_DUEL). Actionable fix: Synchronize lurk timing with main site pressure.",
+      actionable_summary: "moose: Synchronize lurk timing with main site pressure.",
+      mistakes: [MOCK_MISTAKES[4]],
+    },
+    {
+      player_id: "crashies",
+      player_name: "crashies",
+      character_name: "Sova",
+      team_name: "NRG",
+      mistake_count: 1,
+      cumulative_xrw_tax: -0.235,
+      primary_vulnerability: "ISOLATED_DUEL",
+      actionable_summary: "crashies: Conceal reload timing behind sentinel utility.",
+      mistakes: [MOCK_MISTAKES[5]],
+    },
+    {
+      player_id: "Victor",
+      player_name: "Victor",
+      character_name: "Killjoy",
+      team_name: "NRG",
+      mistake_count: 1,
+      cumulative_xrw_tax: -0.280,
+      primary_vulnerability: "UNTRADED_FIRST_DEATH",
+      actionable_summary: "Victor: Maintain discipline on eco rounds and group for trade frags.",
+      mistakes: [MOCK_MISTAKES[8]],
     },
   ],
   prescribed_drills: [
@@ -267,6 +344,108 @@ const MOCK_COACHING_REPORT: CoachingReportResponse = {
       success_criterion: "Target defender fully blinded or concussed before entry player duel initiation in 90% of reps.",
     },
   ],
+  player_stats: {
+    OXY: {
+      player: "OXY",
+      team: "Cloud9",
+      agent: "Jett",
+      k: 22,
+      d: 14,
+      a: 5,
+      acs: 280,
+      adr: 182,
+      fk: 5,
+      fd: 2,
+    },
+    vanity: {
+      player: "vanity",
+      team: "Cloud9",
+      agent: "Omen",
+      k: 14,
+      d: 12,
+      a: 11,
+      acs: 195,
+      adr: 130,
+      fk: 2,
+      fd: 1,
+    },
+    runi: {
+      player: "runi",
+      team: "Cloud9",
+      agent: "Sova",
+      k: 16,
+      d: 13,
+      a: 8,
+      acs: 210,
+      adr: 145,
+      fk: 3,
+      fd: 2,
+    },
+    Xeppaa: {
+      player: "Xeppaa",
+      team: "Cloud9",
+      agent: "Fade",
+      k: 15,
+      d: 14,
+      a: 9,
+      acs: 205,
+      adr: 138,
+      fk: 2,
+      fd: 2,
+    },
+    moose: {
+      player: "moose",
+      team: "Cloud9",
+      agent: "Cypher",
+      k: 13,
+      d: 12,
+      a: 4,
+      acs: 175,
+      adr: 118,
+      fk: 1,
+      fd: 1,
+    },
+    crashies: {
+      player: "crashies",
+      team: "NRG",
+      agent: "Sova",
+      k: 18,
+      d: 15,
+      a: 7,
+      acs: 225,
+      adr: 152,
+      fk: 3,
+      fd: 1,
+    },
+    Victor: {
+      player: "Victor",
+      team: "NRG",
+      agent: "Killjoy",
+      k: 17,
+      d: 16,
+      a: 5,
+      acs: 215,
+      adr: 140,
+      fk: 2,
+      fd: 3,
+    },
+  },
+  round_insights: Array.from({ length: 24 }, (_, i) => ({
+    round_number: i + 1,
+    narrative: `Round ${i + 1} concluded with ${i % 2 === 0 ? "Cloud9" : "NRG"} victory by ${i % 3 === 0 ? "SpikeDefused" : "Elimination"}.`,
+    blunder_culprit: i % 2 === 0 ? "OXY" : "vanity",
+    win_prob_tax: i % 2 === 0 ? -0.24 : -0.18,
+    tactical_directive: i % 2 === 0 ? "Coordinate flash utility with duelist entry." : "Anchor crossfire with site partner.",
+    player_stat_verdict: i % 2 === 0 ? "OXY has 5 FK and 2 FD (280 ACS)." : "vanity has 2 FK and 1 FD (195 ACS).",
+    recommended_drill: {
+      drill_name: "Buddy-System Contact & Trade Timing 2v2",
+      target_players: [i % 2 === 0 ? "OXY" : "vanity"],
+      target_player_names: [i % 2 === 0 ? "OXY" : "vanity"],
+      drill_objective: "Reinforce spacing and instant trade frags.",
+      setup_steps: ["Pair entry fragger with trade partner at choke."],
+      success_criterion: "Trade secured in >= 80% of contacts.",
+    },
+  })),
 };
 
 export default function CoachDashboardPage() {
@@ -278,13 +457,16 @@ export default function CoachDashboardPage() {
     currentRound,
     totalRounds,
     selectedMistake,
+    selectedRoundInsight,
     setSeriesId,
+    setMatchId,
     setGameIndex,
     setSelectedPlayerId,
     togglePlay,
     setCurrentRound,
     setTotalRounds,
     setSelectedMistake,
+    setSelectedRoundInsight,
   } = useCoachStore();
 
   const [featuredSeries, setFeaturedSeries] = useState<FeaturedSeries[]>(
@@ -292,6 +474,13 @@ export default function CoachDashboardPage() {
   );
   const [data, setData] = useState<CoachingReportResponse>(MOCK_COACHING_REPORT);
   const [dataSource, setDataSource] = useState<"live" | "mock">("mock");
+
+  // Synchronize store selectedRoundInsight with active round insight
+  useEffect(() => {
+    const matched =
+      data.round_insights?.find((ri) => ri.round_number === currentRound) || null;
+    setSelectedRoundInsight(matched);
+  }, [currentRound, data.round_insights, setSelectedRoundInsight]);
 
   // Fetch featured series catalog
   useEffect(() => {
@@ -324,10 +513,14 @@ export default function CoachDashboardPage() {
     async function fetchReport() {
       try {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-        const res = await fetch(
-          `${apiUrl}/api/v1/series/${selectedSeriesId}/coaching-report?game_index=${currentGameIndex}&max_envelopes=2000`,
-          { signal: controller.signal }
-        );
+        const isVlrMatch =
+          selectedSeriesId.startsWith("vlr-") || selectedSeriesId.startsWith("vlr_");
+        const vlrMatchId = selectedSeriesId.replace(/^(vlr-|vlr_)/, "");
+        const url = isVlrMatch
+          ? `${apiUrl}/api/v1/vlr/match/${vlrMatchId}/coaching-report?game_id=${currentGameIndex + 1}`
+          : `${apiUrl}/api/v1/series/${selectedSeriesId}/coaching-report?game_index=${currentGameIndex}&max_envelopes=2000`;
+
+        const res = await fetch(url, { signal: controller.signal });
         if (res.ok) {
           const report: CoachingReportResponse = await res.json();
           if (isMounted) {
@@ -366,6 +559,11 @@ export default function CoachDashboardPage() {
     };
   }, [selectedSeriesId, currentGameIndex, setTotalRounds]);
 
+  const activeRoundInsight =
+    data.round_insights?.find((ri) => ri.round_number === currentRound) ||
+    selectedRoundInsight ||
+    null;
+
   const activeGame = data.games?.[currentGameIndex] || data.games?.[0];
   const activeRounds = activeGame?.rounds || [];
   const activeRoundKills =
@@ -384,25 +582,15 @@ export default function CoachDashboardPage() {
   ).length;
 
   return (
-    <div className="h-screen w-screen overflow-hidden flex flex-col c9-bg-ethereal text-slate-900 selection:bg-[#008cd4] selection:text-white">
+    <div className="min-h-screen w-screen lg:h-screen lg:overflow-hidden flex flex-col c9-bg-ethereal text-slate-900 selection:bg-[#008cd4] selection:text-white">
       {/* Top Header Bar */}
       <header className="h-16 flex-shrink-0 bg-white/80 backdrop-blur-xl border-b border-sky-300/40 px-6 flex items-center justify-between z-20 shadow-[0_4px_20px_rgba(0,140,212,0.08)]">
         {/* Brand & Title */}
         <div className="flex items-center gap-3">
-          <Cloud9Logo size={42} glow={true} showWatermark={true} />
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-base font-black tracking-tight text-slate-900 flex items-center gap-1.5">
-                CLOUD9 <span className="text-[#008cd4] font-black">ORACLE</span>
-              </span>
-              <span className="text-[9px] font-mono font-bold uppercase bg-sky-100 text-[#0077b6] border border-sky-300 px-1.5 py-0.2 rounded shadow-sm">
-                HUD v2.0
-              </span>
-            </div>
-            <p className="text-[10px] text-slate-500 font-medium">
-              VCT Americas Counter-Strategy & Micro-Mistake Intelligence
-            </p>
-          </div>
+          <Cloud9Logo size={36} glow={true} showWatermark={true} />
+          <span className="text-base font-black tracking-tight text-slate-900 flex items-center gap-1.5">
+            CLOUD9 <span className="text-[#008cd4] font-black">ORACLE</span>
+          </span>
         </div>
 
         {/* Center: Series Selector & Map Switcher */}
@@ -415,7 +603,14 @@ export default function CoachDashboardPage() {
             <select
               aria-label="Select Series"
               value={selectedSeriesId}
-              onChange={(e) => setSeriesId(e.target.value)}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (val.startsWith("vlr-")) {
+                  setMatchId(val);
+                } else {
+                  setSeriesId(val);
+                }
+              }}
               className="bg-transparent text-slate-900 text-xs font-semibold focus:outline-none cursor-pointer"
             >
               {featuredSeries.map((s) => (
@@ -468,26 +663,37 @@ export default function CoachDashboardPage() {
           </div>
 
           <div
-            className={`flex items-center gap-1.5 px-3 py-1 rounded-lg border font-mono text-[10px] font-bold ${
+            className={`px-3 py-1 rounded-lg border font-mono text-[10px] font-bold ${
               dataSource === "live"
                 ? "bg-emerald-50 text-emerald-700 border-emerald-300 shadow-sm"
                 : "bg-sky-50 text-[#0077b6] border-sky-300 shadow-sm"
             }`}
           >
-            <span
-              className={`w-1.5 h-1.5 rounded-full ${
-                dataSource === "live" ? "bg-emerald-500 animate-pulse" : "bg-[#008cd4]"
-              }`}
-            ></span>
             {dataSource === "live" ? "LIVE TELEMETRY" : "BENCHMARK"}
           </div>
         </div>
       </header>
 
       {/* Main Grid Area */}
-      <main className="flex-1 min-h-0 grid grid-cols-12 gap-5 p-5 overflow-hidden">
-        {/* Left: MinimapReplay Container */}
-        <section className="col-span-7 flex flex-col min-h-0 h-full">
+      <main className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-12 gap-4 p-3 sm:p-4 overflow-y-auto lg:overflow-hidden">
+        {/* Left Column: Round Selection (top) + Tactical Map (bottom) */}
+        <section
+          aria-label="Round Selection and Tactical Map"
+          className="col-span-12 lg:col-span-7 flex flex-col min-h-0 lg:h-full gap-3.5"
+        >
+          {/* Card 1: Round Selection */}
+          <RoundSelection
+            currentRound={currentRound}
+            totalRounds={totalRounds}
+            onRoundChange={setCurrentRound}
+            isPlaying={isPlaying}
+            onTogglePlay={togglePlay}
+            rounds={activeRounds}
+            mistakes={data.mistakes}
+            mapName={activeGame?.map_name || "Ascent"}
+          />
+
+          {/* Card 2: Tactical Map Replay */}
           <MinimapReplay
             currentRound={currentRound}
             totalRounds={totalRounds}
@@ -501,24 +707,43 @@ export default function CoachDashboardPage() {
             selectedPlayerId={selectedPlayerId}
             isPlaying={isPlaying}
             onTogglePlay={togglePlay}
+            standalone={false}
           />
         </section>
 
-        {/* Right: Dual Glass Cards */}
-        <section className="col-span-5 flex flex-col min-h-0 h-full space-y-4 overflow-hidden">
-          {/* Card 1: Player Error Tax & Vulnerabilities */}
-          <div className="flex-1 min-h-0 glass-panel rounded-xl p-4 flex flex-col overflow-hidden shadow-xl">
+        {/* Right Column: SLM Coaching Debrief, Player Error Report & Training Drills */}
+        <section
+          aria-label="Player Error Report and Training Drills"
+          className="col-span-12 lg:col-span-5 flex flex-col min-h-0 lg:h-full gap-3 overflow-y-auto pr-0.5"
+        >
+          {/* SLM Assistant Coach Real-Time Debrief Panel */}
+          <div data-testid="slm-coach-panel-container" className="flex-shrink-0">
+            <SLMCoachPanel
+              insight={activeRoundInsight}
+              roundNumber={currentRound}
+            />
+          </div>
+
+          {/* Card 1: Player Error Report */}
+          <div
+            data-testid="player-error-report-card"
+            className="flex-1 min-h-[220px] glass-panel rounded-xl p-3.5 sm:p-4 flex flex-col overflow-hidden shadow-lg border border-sky-300/40"
+          >
             <div className="flex-1 min-h-0 overflow-y-auto pr-1">
               <PlayerReportCards
                 reports={data.player_reports}
                 selectedPlayerId={selectedPlayerId}
                 onSelectPlayer={setSelectedPlayerId}
+                playerStats={data.player_stats}
               />
             </div>
           </div>
 
-          {/* Card 2: Prescribed Team Practice Drills */}
-          <div className="flex-1 min-h-0 glass-panel rounded-xl p-4 flex flex-col overflow-hidden shadow-xl">
+          {/* Card 2: Training Drills */}
+          <div
+            data-testid="training-drills-card"
+            className="flex-1 min-h-[200px] glass-panel rounded-xl p-3.5 sm:p-4 flex flex-col overflow-hidden shadow-lg border border-sky-300/40"
+          >
             <div className="flex-1 min-h-0 overflow-y-auto pr-1">
               <DrillPrescriptions
                 drills={data.prescribed_drills}
