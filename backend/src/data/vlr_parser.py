@@ -74,15 +74,40 @@ def normalize_vlr_series(
             )
         )
 
-    game = ParsedGame(
-        game_id=logs.data.game_id or "1",
-        map_name=map_name,
-        rounds=rounds,
-    )
+    active_game_id = str(logs.data.game_id or "1")
+    all_games = []
+
+    if details and details.data.maps:
+        for m in details.data.maps:
+            m_id = str(m.map_id)
+            if m_id == active_game_id:
+                all_games.append(
+                    ParsedGame(
+                        game_id=m_id,
+                        map_name=m.name,
+                        rounds=rounds,
+                    )
+                )
+            else:
+                all_games.append(
+                    ParsedGame(
+                        game_id=m_id,
+                        map_name=m.name,
+                        rounds=[],
+                    )
+                )
+    else:
+        all_games.append(
+            ParsedGame(
+                game_id=active_game_id,
+                map_name=map_name,
+                rounds=rounds,
+            )
+        )
 
     return ParsedSeries(
         series_id=logs.data.match_id,
         team1_name=team1_name,
         team2_name=team2_name,
-        games=[game],
+        games=all_games,
     )

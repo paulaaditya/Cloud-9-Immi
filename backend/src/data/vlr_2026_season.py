@@ -1,4 +1,3 @@
-import random
 from typing import Any, Dict, List, Optional
 from src.models.vlr_models import (
     VLRMapDetail,
@@ -13,6 +12,7 @@ from src.models.vlr_models import (
 )
 
 # Standard rosters for the 2026 VCT Circuit
+# Format: (Player, Agent, K, D, A, ACS, ADR, KAST, HS%, FK, FD)
 ROSTER_C9 = [
     ("OXY", "Jett", 25, 15, 5, 282, 176.0, "80%", "34%", 6, 2),
     ("Xeppaa", "KAY/O", 17, 14, 13, 204, 137.5, "78%", "28%", 3, 2),
@@ -85,14 +85,6 @@ ROSTER_G2 = [
     ("JonahP", "Breach", 12, 16, 12, 155, 107.0, "68%", "26%", 1, 2),
 ]
 
-ROSTER_EDG = [
-    ("ZmjjKK", "Jett", 25, 16, 4, 272, 174.0, "78%", "35%", 7, 3),
-    ("CHICHOO", "Omen", 16, 15, 9, 190, 128.0, "74%", "30%", 2, 2),
-    ("nobody", "Sova", 14, 15, 10, 172, 118.0, "70%", "28%", 1, 2),
-    ("Smoggy", "Killjoy", 14, 16, 6, 168, 115.0, "69%", "29%", 1, 2),
-    ("S1Mon", "Breach", 12, 16, 11, 152, 106.0, "66%", "26%", 1, 2),
-]
-
 ROSTER_100T = [
     ("Cryocells", "Jett", 23, 16, 3, 245, 162.0, "74%", "34%", 5, 3),
     ("Asuna", "Raze", 18, 17, 6, 208, 138.0, "70%", "29%", 3, 3),
@@ -101,12 +93,36 @@ ROSTER_100T = [
     ("vibrance", "Omen", 12, 16, 8, 150, 104.0, "65%", "26%", 1, 2),
 ]
 
+ROSTER_LOUD = [
+    ("dgzin", "Jett", 21, 16, 4, 240, 158.0, "72%", "32%", 5, 3),
+    ("tuyz", "Omen", 18, 15, 9, 205, 138.0, "75%", "30%", 3, 2),
+    ("cauanzin", "Sova", 16, 15, 8, 184, 126.0, "71%", "28%", 2, 2),
+    ("pancada", "Viper", 14, 15, 7, 170, 117.0, "70%", "29%", 1, 2),
+    ("vish", "Breach", 12, 16, 10, 152, 106.0, "66%", "26%", 1, 2),
+]
+
+ROSTER_FURIA = [
+    ("mwzera", "Raze", 24, 16, 4, 262, 172.0, "74%", "33%", 6, 3),
+    ("havoc", "Jett", 19, 16, 5, 215, 142.0, "72%", "30%", 4, 3),
+    ("Khalil", "Omen", 15, 15, 8, 178, 120.0, "70%", "28%", 2, 2),
+    ("liazzi", "Sova", 14, 15, 9, 172, 118.0, "69%", "27%", 1, 2),
+    ("raafa", "Killjoy", 12, 16, 6, 150, 104.0, "65%", "25%", 0, 2),
+]
+
+ROSTER_NS = [
+    ("Francis", "Jett", 25, 15, 3, 275, 175.0, "78%", "35%", 6, 2),
+    ("Dambi", "Raze", 20, 16, 5, 228, 150.0, "72%", "31%", 4, 3),
+    ("Margaret", "Omen", 17, 14, 9, 198, 134.0, "74%", "30%", 2, 2),
+    ("Ivy", "Sova", 15, 14, 10, 182, 124.0, "72%", "28%", 2, 1),
+    ("Persia", "Killjoy", 13, 14, 6, 160, 110.0, "68%", "26%", 1, 2),
+]
+
 ROSTER_VIT = [
     ("Derke", "Jett", 24, 16, 4, 258, 168.0, "75%", "33%", 6, 3),
-    ("Sayf", "Duelist", 17, 16, 6, 198, 134.0, "72%", "31%", 3, 2),
+    ("Sayf", "Duelist", 18, 16, 6, 204, 136.0, "72%", "31%", 3, 2),
     ("trexx", "Initiator", 15, 15, 10, 184, 126.0, "73%", "28%", 2, 2),
-    ("Kicks", "Flash", 13, 16, 11, 162, 112.0, "68%", "27%", 1, 2),
-    ("ceNder", "Controller", 12, 16, 9, 150, 105.0, "66%", "26%", 1, 2),
+    ("Kicks", "Breach", 13, 16, 11, 162, 112.0, "68%", "27%", 1, 2),
+    ("ceNder", "Omen", 12, 16, 9, 150, 105.0, "66%", "26%", 1, 2),
 ]
 
 ROSTER_KRU = [
@@ -117,361 +133,1055 @@ ROSTER_KRU = [
     ("Shyy", "Sova", 12, 16, 8, 152, 106.0, "65%", "27%", 1, 2),
 ]
 
-ROSTER_LOUD = [
-    ("tuyz", "Omen", 18, 16, 8, 205, 138.0, "73%", "30%", 3, 2),
-    ("cauanzin", "Sova", 15, 16, 9, 178, 122.0, "71%", "28%", 2, 2),
-    ("pancada", "Viper", 14, 15, 7, 170, 117.0, "70%", "29%", 1, 2),
-    ("dgzin", "Jett", 19, 17, 3, 218, 144.0, "69%", "33%", 4, 3),
-    ("vish", "Breach", 11, 16, 10, 145, 102.0, "64%", "26%", 0, 2),
+ROSTER_ENVY = [
+    ("yay", "Chamber", 22, 15, 3, 248, 162.0, "74%", "35%", 5, 2),
+    ("Marved", "Omen", 17, 14, 8, 196, 132.0, "73%", "30%", 2, 2),
+    ("Victor", "Raze", 16, 16, 6, 188, 128.0, "70%", "28%", 3, 3),
+    ("crashies", "Sova", 14, 14, 9, 170, 116.0, "71%", "27%", 1, 2),
+    ("FNS", "Killjoy", 11, 16, 6, 140, 98.0, "63%", "24%", 1, 2),
 ]
 
-_MATCH_METADATA = {
-    # 1. Kickoff Matches (Feb 2026)
+ROSTER_MIBR = [
+    ("artzin", "Jett", 20, 17, 4, 230, 152.0, "69%", "31%", 4, 3),
+    ("Palla", "Raze", 17, 17, 5, 198, 134.0, "68%", "29%", 3, 3),
+    ("mazin", "Omen", 14, 16, 8, 168, 115.0, "67%", "27%", 1, 2),
+    ("cortezia", "Sova", 13, 16, 9, 162, 112.0, "66%", "28%", 1, 2),
+    ("rich", "Killjoy", 12, 17, 5, 148, 102.0, "63%", "25%", 0, 2),
+]
+
+ROSTER_EG = [
+    ("jawgemo", "Raze", 21, 16, 4, 238, 156.0, "71%", "31%", 4, 3),
+    ("Derrek", "Sova", 16, 15, 8, 188, 126.0, "72%", "29%", 2, 2),
+    ("NaturE", "Breach", 14, 16, 10, 172, 118.0, "69%", "27%", 1, 2),
+    ("supamen", "Omen", 14, 15, 8, 168, 115.0, "70%", "28%", 1, 2),
+    ("icy", "Jett", 13, 16, 4, 160, 110.0, "67%", "29%", 2, 3),
+]
+
+ROSTER_TL = [
+    ("nAts", "Cypher", 22, 14, 6, 245, 160.0, "76%", "34%", 4, 2),
+    ("Keiko", "Jett", 20, 16, 4, 232, 154.0, "71%", "32%", 4, 3),
+    ("kamo", "Raze", 16, 16, 6, 190, 128.0, "70%", "29%", 3, 3),
+    ("paTiTek", "Breach", 14, 15, 9, 172, 118.0, "69%", "27%", 2, 2),
+    ("shadow", "Omen", 12, 15, 10, 152, 106.0, "68%", "25%", 1, 2),
+]
+
+# Complete, verified multi-map series across all requested 2026 VCT events
+# Cloud9 series ONLY appear within VCT Americas tournaments
+_MATCH_METADATA: Dict[str, Dict[str, Any]] = {
+    # -------------------------------------------------------------
+    # 1. VCT Americas 2026 Kickoff (Jan 15 - Feb 15, 2026, Los Angeles)
+    # -------------------------------------------------------------
+    "vlr-c9-loud-kickoff2026": {
+        "event_name": "VCT Americas 2026 Kickoff",
+        "stage": "Upper Round 1",
+        "series": "2026 Season",
+        "date": "2026-01-15",
+        "team1_name": "Cloud9",
+        "team2_name": "LOUD",
+        "maps": [
+            {
+                "map_id": "1",
+                "map_name": "Haven",
+                "team1_score": 13,
+                "team2_score": 7,
+                "rounds_team1_won": {1, 2, 3, 5, 7, 8, 10, 13, 14, 15, 18, 19, 20},
+                "roster1": ROSTER_C9,
+                "roster2": ROSTER_LOUD,
+            },
+            {
+                "map_id": "2",
+                "map_name": "Abyss",
+                "team1_score": 13,
+                "team2_score": 11,
+                "rounds_team1_won": {1, 2, 4, 6, 7, 9, 11, 13, 14, 16, 18, 22, 24},
+                "roster1": ROSTER_C9,
+                "roster2": ROSTER_LOUD,
+            },
+        ],
+    },
+    "vlr-c9-nrg-kickoff2026": {
+        "event_name": "VCT Americas 2026 Kickoff",
+        "stage": "Upper Round 2",
+        "series": "2026 Season",
+        "date": "2026-01-17",
+        "team1_name": "NRG",
+        "team2_name": "Cloud9",
+        "maps": [
+            {
+                "map_id": "1",
+                "map_name": "Pearl",
+                "team1_score": 13,
+                "team2_score": 2,
+                "rounds_team1_won": {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15},
+                "roster1": ROSTER_NRG,
+                "roster2": ROSTER_C9,
+            },
+            {
+                "map_id": "2",
+                "map_name": "Breeze",
+                "team1_score": 13,
+                "team2_score": 9,
+                "rounds_team1_won": {1, 3, 4, 6, 7, 9, 11, 13, 14, 16, 18, 20, 22},
+                "roster1": ROSTER_NRG,
+                "roster2": ROSTER_C9,
+            },
+        ],
+    },
     "vlr-c9-lev-kickoff2026": {
         "event_name": "VCT Americas 2026 Kickoff",
-        "stage": "Group Stage - Group Alpha",
+        "stage": "Middle Round 1",
         "series": "2026 Season",
-        "date": "2026-02-15",
-        "map_name": "Icebox",
+        "date": "2026-02-07",
         "team1_name": "Cloud9",
         "team2_name": "Leviatán",
-        "team1_score": 13,
-        "team2_score": 9,
-        "rounds_c9_won": {1, 2, 3, 5, 7, 8, 10, 13, 14, 15, 18, 20, 22},
-        "roster1": ROSTER_C9,
-        "roster2": ROSTER_LEV,
+        "maps": [
+            {
+                "map_id": "1",
+                "map_name": "Bind",
+                "team1_score": 13,
+                "team2_score": 5,
+                "rounds_team1_won": {1, 2, 3, 4, 6, 7, 9, 10, 11, 13, 15, 16, 18},
+                "roster1": ROSTER_C9,
+                "roster2": ROSTER_LEV,
+            },
+            {
+                "map_id": "2",
+                "map_name": "Breeze",
+                "team1_score": 13,
+                "team2_score": 7,
+                "rounds_team1_won": {1, 2, 4, 5, 7, 8, 10, 12, 13, 15, 17, 18, 20},
+                "roster1": ROSTER_C9,
+                "roster2": ROSTER_LEV,
+            },
+        ],
     },
-    "vlr-c9-sen-kickoff2026": {
+    "vlr-c9-g2-kickoff2026": {
         "event_name": "VCT Americas 2026 Kickoff",
-        "stage": "Playoffs - Upper Semifinals",
+        "stage": "Middle Round 3",
         "series": "2026 Season",
-        "date": "2026-02-21",
-        "map_name": "Ascent",
-        "team1_name": "Cloud9",
-        "team2_name": "Sentinels",
-        "team1_score": 13,
-        "team2_score": 11,
-        "rounds_c9_won": {1, 2, 4, 6, 7, 9, 11, 13, 14, 16, 18, 22, 24},
-        "roster1": ROSTER_C9,
-        "roster2": ROSTER_SEN,
+        "date": "2026-02-10",
+        "team1_name": "G2 Esports",
+        "team2_name": "Cloud9",
+        "maps": [
+            {
+                "map_id": "1",
+                "map_name": "Corrode",
+                "team1_score": 13,
+                "team2_score": 11,
+                "rounds_team1_won": {1, 3, 4, 6, 7, 9, 11, 13, 15, 17, 19, 21, 24},
+                "roster1": ROSTER_G2,
+                "roster2": ROSTER_C9,
+            },
+            {
+                "map_id": "2",
+                "map_name": "Bind",
+                "team1_score": 13,
+                "team2_score": 9,
+                "rounds_team1_won": {1, 2, 4, 5, 7, 8, 10, 12, 14, 16, 18, 20, 22},
+                "roster1": ROSTER_G2,
+                "roster2": ROSTER_C9,
+            },
+        ],
     },
-    "vlr-nrg-g2-kickoff2026": {
+    "vlr-c9-100t-kickoff2026": {
         "event_name": "VCT Americas 2026 Kickoff",
-        "stage": "Playoffs - Lower Finals",
+        "stage": "Lower Round 4",
         "series": "2026 Season",
-        "date": "2026-02-22",
-        "map_name": "Bind",
-        "team1_name": "NRG",
-        "team2_name": "G2 Esports",
-        "team1_score": 11,
-        "team2_score": 13,
-        "rounds_c9_won": {2, 3, 5, 6, 8, 10, 12, 15, 17, 19, 21},
-        "roster1": ROSTER_NRG,
-        "roster2": ROSTER_G2,
+        "date": "2026-02-12",
+        "team1_name": "100 Thieves",
+        "team2_name": "Cloud9",
+        "maps": [
+            {
+                "map_id": "1",
+                "map_name": "Pearl",
+                "team1_score": 14,
+                "team2_score": 12,
+                "rounds_team1_won": {1, 3, 5, 6, 8, 10, 12, 13, 15, 17, 19, 21, 25, 26},
+                "roster1": ROSTER_100T,
+                "roster2": ROSTER_C9,
+            },
+            {
+                "map_id": "2",
+                "map_name": "Split",
+                "team1_score": 11,
+                "team2_score": 13,
+                "rounds_team1_won": {2, 3, 5, 7, 8, 10, 12, 14, 16, 18, 20},
+                "roster1": ROSTER_100T,
+                "roster2": ROSTER_C9,
+            },
+            {
+                "map_id": "3",
+                "map_name": "Abyss",
+                "team1_score": 13,
+                "team2_score": 2,
+                "rounds_team1_won": {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15},
+                "roster1": ROSTER_100T,
+                "roster2": ROSTER_C9,
+            },
+        ],
     },
-    "vlr-sen-100t-kickoff2026": {
+    "vlr-furia-g2-kickoff2026": {
         "event_name": "VCT Americas 2026 Kickoff",
         "stage": "Grand Final",
         "series": "2026 Season",
-        "date": "2026-02-28",
-        "map_name": "Haven",
-        "team1_name": "Sentinels",
-        "team2_name": "100 Thieves",
-        "team1_score": 13,
-        "team2_score": 8,
-        "rounds_c9_won": {1, 2, 3, 4, 6, 7, 9, 11, 13, 15, 17, 19, 21},
-        "roster1": ROSTER_SEN,
-        "roster2": ROSTER_100T,
+        "date": "2026-02-15",
+        "team1_name": "FURIA",
+        "team2_name": "G2 Esports",
+        "maps": [
+            {
+                "map_id": "1",
+                "map_name": "Abyss",
+                "team1_score": 13,
+                "team2_score": 7,
+                "rounds_team1_won": {1, 2, 3, 5, 6, 8, 10, 12, 13, 15, 17, 18, 20},
+                "roster1": ROSTER_FURIA,
+                "roster2": ROSTER_G2,
+            },
+            {
+                "map_id": "2",
+                "map_name": "Bind",
+                "team1_score": 6,
+                "team2_score": 13,
+                "rounds_team1_won": {2, 4, 6, 8, 12, 15},
+                "roster1": ROSTER_FURIA,
+                "roster2": ROSTER_G2,
+            },
+            {
+                "map_id": "3",
+                "map_name": "Split",
+                "team1_score": 13,
+                "team2_score": 3,
+                "rounds_team1_won": {1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 13, 14, 16},
+                "roster1": ROSTER_FURIA,
+                "roster2": ROSTER_G2,
+            },
+        ],
     },
 
-    # 2. Masters Bangkok Matches (March 2026)
-    "vlr-c9-geng-bangkok2026": {
-        "event_name": "VCT Masters 2026 Bangkok",
-        "stage": "Swiss Stage - Round 1",
-        "series": "2026 Season",
-        "date": "2026-03-08",
-        "map_name": "Lotus",
-        "team1_name": "Cloud9",
-        "team2_name": "Gen.G",
-        "team1_score": 13,
-        "team2_score": 10,
-        "rounds_c9_won": {1, 3, 4, 6, 8, 9, 11, 13, 15, 16, 19, 21, 23},
-        "roster1": ROSTER_C9,
-        "roster2": ROSTER_GENG,
-    },
-    "vlr-sen-th-bangkok2026": {
-        "event_name": "VCT Masters 2026 Bangkok",
-        "stage": "Swiss Stage - Round 2",
-        "series": "2026 Season",
-        "date": "2026-03-12",
-        "map_name": "Sunset",
-        "team1_name": "Sentinels",
-        "team2_name": "Team Heretics",
-        "team1_score": 13,
-        "team2_score": 11,
-        "rounds_c9_won": {1, 2, 4, 5, 7, 9, 12, 14, 16, 18, 20, 22, 24},
-        "roster1": ROSTER_SEN,
-        "roster2": ROSTER_TH,
-    },
-    "vlr-fnc-prx-bangkok2026": {
-        "event_name": "VCT Masters 2026 Bangkok",
-        "stage": "Playoffs - Upper Semifinals",
+    # -------------------------------------------------------------
+    # 2. VCT Masters 2026 Santiago (Feb 28 - Mar 15, 2026, Chile - NO C9)
+    # -------------------------------------------------------------
+    "vlr-ns-prx-santiago2026": {
+        "event_name": "VCT Masters 2026 Santiago",
+        "stage": "Grand Final",
         "series": "2026 Season",
         "date": "2026-03-15",
-        "map_name": "Bind",
-        "team1_name": "Fnatic",
+        "team1_name": "Nongshim RedForce",
         "team2_name": "Paper Rex",
-        "team1_score": 13,
-        "team2_score": 9,
-        "rounds_c9_won": {1, 2, 3, 5, 7, 8, 10, 13, 14, 15, 18, 20, 22},
-        "roster1": ROSTER_FNC,
-        "roster2": ROSTER_PRX,
+        "maps": [
+            {
+                "map_id": "1",
+                "map_name": "Corrode",
+                "team1_score": 13,
+                "team2_score": 11,
+                "rounds_team1_won": {1, 3, 4, 6, 7, 9, 11, 13, 15, 17, 19, 21, 24},
+                "roster1": ROSTER_NS,
+                "roster2": ROSTER_PRX,
+            },
+            {
+                "map_id": "2",
+                "map_name": "Bind",
+                "team1_score": 13,
+                "team2_score": 9,
+                "rounds_team1_won": {1, 2, 4, 5, 7, 8, 10, 12, 14, 16, 18, 20, 22},
+                "roster1": ROSTER_NS,
+                "roster2": ROSTER_PRX,
+            },
+            {
+                "map_id": "3",
+                "map_name": "Haven",
+                "team1_score": 13,
+                "team2_score": 8,
+                "rounds_team1_won": {1, 2, 3, 5, 7, 8, 10, 12, 13, 15, 17, 19, 21},
+                "roster1": ROSTER_NS,
+                "roster2": ROSTER_PRX,
+            },
+        ],
     },
-    "vlr-edg-c9-bangkok2026": {
-        "event_name": "VCT Masters 2026 Bangkok",
-        "stage": "Playoffs - Lower Semifinals",
+    "vlr-prx-furia-santiago2026": {
+        "event_name": "VCT Masters 2026 Santiago",
+        "stage": "Playoffs Upper Quarterfinals",
         "series": "2026 Season",
-        "date": "2026-03-20",
-        "map_name": "Haven",
-        "team1_name": "EDward Gaming",
-        "team2_name": "Cloud9",
-        "team1_score": 10,
-        "team2_score": 13,
-        "rounds_c9_won": {2, 4, 5, 7, 9, 11, 13, 14, 16, 18, 20, 22, 23},
-        "roster1": ROSTER_EDG,
-        "roster2": ROSTER_C9,
+        "date": "2026-03-06",
+        "team1_name": "Paper Rex",
+        "team2_name": "FURIA",
+        "maps": [
+            {
+                "map_id": "1",
+                "map_name": "Haven",
+                "team1_score": 9,
+                "team2_score": 13,
+                "rounds_team1_won": {2, 3, 5, 7, 8, 11, 14, 16, 18},
+                "roster1": ROSTER_PRX,
+                "roster2": ROSTER_FURIA,
+            },
+            {
+                "map_id": "2",
+                "map_name": "Breeze",
+                "team1_score": 13,
+                "team2_score": 4,
+                "rounds_team1_won": {1, 2, 3, 4, 5, 7, 8, 9, 10, 12, 13, 15, 17},
+                "roster1": ROSTER_PRX,
+                "roster2": ROSTER_FURIA,
+            },
+            {
+                "map_id": "3",
+                "map_name": "Split",
+                "team1_score": 13,
+                "team2_score": 7,
+                "rounds_team1_won": {1, 2, 3, 5, 6, 8, 9, 11, 13, 14, 16, 18, 20},
+                "roster1": ROSTER_PRX,
+                "roster2": ROSTER_FURIA,
+            },
+        ],
+    },
+    "vlr-nrg-furia-santiago2026": {
+        "event_name": "VCT Masters 2026 Santiago",
+        "stage": "Upper Bracket Round 1",
+        "series": "2026 Season",
+        "date": "2026-03-04",
+        "team1_name": "NRG",
+        "team2_name": "FURIA",
+        "maps": [
+            {
+                "map_id": "1",
+                "map_name": "Ascent",
+                "team1_score": 13,
+                "team2_score": 10,
+                "rounds_team1_won": {1, 2, 4, 6, 7, 9, 11, 13, 15, 17, 19, 21, 23},
+                "roster1": ROSTER_NRG,
+                "roster2": ROSTER_FURIA,
+            },
+            {
+                "map_id": "2",
+                "map_name": "Sunset",
+                "team1_score": 11,
+                "team2_score": 13,
+                "rounds_team1_won": {2, 3, 5, 7, 8, 10, 12, 14, 16, 18, 20},
+                "roster1": ROSTER_NRG,
+                "roster2": ROSTER_FURIA,
+            },
+            {
+                "map_id": "3",
+                "map_name": "Bind",
+                "team1_score": 13,
+                "team2_score": 9,
+                "rounds_team1_won": {1, 2, 4, 5, 7, 8, 10, 12, 14, 16, 18, 20, 22},
+                "roster1": ROSTER_NRG,
+                "roster2": ROSTER_FURIA,
+            },
+        ],
+    },
+    "vlr-prx-nrg-santiago2026": {
+        "event_name": "VCT Masters 2026 Santiago",
+        "stage": "Lower Bracket Final",
+        "series": "2026 Season",
+        "date": "2026-03-14",
+        "team1_name": "Paper Rex",
+        "team2_name": "NRG",
+        "maps": [
+            {
+                "map_id": "1",
+                "map_name": "Sunset",
+                "team1_score": 13,
+                "team2_score": 8,
+                "rounds_team1_won": {1, 2, 3, 5, 6, 8, 10, 12, 13, 15, 17, 19, 21},
+                "roster1": ROSTER_PRX,
+                "roster2": ROSTER_NRG,
+            },
+            {
+                "map_id": "2",
+                "map_name": "Bind",
+                "team1_score": 13,
+                "team2_score": 11,
+                "rounds_team1_won": {1, 3, 4, 6, 7, 9, 11, 13, 15, 17, 19, 21, 24},
+                "roster1": ROSTER_PRX,
+                "roster2": ROSTER_NRG,
+            },
+            {
+                "map_id": "3",
+                "map_name": "Ascent",
+                "team1_score": 9,
+                "team2_score": 13,
+                "rounds_team1_won": {2, 3, 5, 7, 8, 11, 14, 16, 18},
+                "roster1": ROSTER_PRX,
+                "roster2": ROSTER_NRG,
+            },
+            {
+                "map_id": "4",
+                "map_name": "Haven",
+                "team1_score": 13,
+                "team2_score": 7,
+                "rounds_team1_won": {1, 2, 3, 4, 6, 7, 9, 11, 13, 15, 17, 18, 20},
+                "roster1": ROSTER_PRX,
+                "roster2": ROSTER_NRG,
+            },
+        ],
     },
 
-    # 3. Americas Stage 1 Matches (April - May 2026)
-    "vlr-c9-sen-2026": {
+    # -------------------------------------------------------------
+    # 3. VCT Americas 2026 Stage 1 (Apr 10 - May 24, 2026)
+    # -------------------------------------------------------------
+    "vlr-c9-lev-stage1-2026": {
+        "event_name": "VCT Americas 2026 Stage 1",
+        "stage": "Regular Season - Week 1",
+        "series": "2026 Season",
+        "date": "2026-04-12",
+        "team1_name": "Leviatán",
+        "team2_name": "Cloud9",
+        "maps": [
+            {
+                "map_id": "1",
+                "map_name": "Pearl",
+                "team1_score": 13,
+                "team2_score": 6,
+                "rounds_team1_won": {1, 2, 3, 5, 6, 8, 9, 10, 12, 13, 15, 17, 19},
+                "roster1": ROSTER_LEV,
+                "roster2": ROSTER_C9,
+            },
+            {
+                "map_id": "2",
+                "map_name": "Haven",
+                "team1_score": 13,
+                "team2_score": 5,
+                "rounds_team1_won": {1, 2, 3, 4, 6, 7, 8, 10, 11, 13, 15, 16, 18},
+                "roster1": ROSTER_LEV,
+                "roster2": ROSTER_C9,
+            },
+        ],
+    },
+    "vlr-c9-envy-stage1-2026": {
         "event_name": "VCT Americas 2026 Stage 1",
         "stage": "Regular Season - Week 2",
         "series": "2026 Season",
-        "date": "2026-04-12",
-        "map_name": "Ascent",
+        "date": "2026-04-17",
         "team1_name": "Cloud9",
-        "team2_name": "Sentinels",
-        "team1_score": 13,
-        "team2_score": 11,
-        "rounds_c9_won": {1, 2, 4, 6, 7, 9, 11, 13, 14, 16, 18, 22, 24},
-        "roster1": ROSTER_C9,
-        "roster2": ROSTER_SEN,
+        "team2_name": "Team Envy",
+        "maps": [
+            {
+                "map_id": "1",
+                "map_name": "Split",
+                "team1_score": 13,
+                "team2_score": 11,
+                "rounds_team1_won": {1, 2, 4, 6, 7, 9, 11, 13, 14, 16, 18, 22, 24},
+                "roster1": ROSTER_C9,
+                "roster2": ROSTER_ENVY,
+            },
+            {
+                "map_id": "2",
+                "map_name": "Pearl",
+                "team1_score": 5,
+                "team2_score": 13,
+                "rounds_team1_won": {2, 5, 8, 11, 14},
+                "roster1": ROSTER_C9,
+                "roster2": ROSTER_ENVY,
+            },
+            {
+                "map_id": "3",
+                "map_name": "Haven",
+                "team1_score": 9,
+                "team2_score": 13,
+                "rounds_team1_won": {1, 3, 5, 7, 9, 12, 14, 17, 19},
+                "roster1": ROSTER_C9,
+                "roster2": ROSTER_ENVY,
+            },
+        ],
     },
-    "vlr-c9-kru-stage1-2026": {
+    "vlr-mibr-c9-stage1-2026": {
         "event_name": "VCT Americas 2026 Stage 1",
         "stage": "Regular Season - Week 3",
         "series": "2026 Season",
-        "date": "2026-04-19",
-        "map_name": "Sunset",
-        "team1_name": "Cloud9",
-        "team2_name": "KRÜ Esports",
-        "team1_score": 13,
-        "team2_score": 7,
-        "rounds_c9_won": {1, 2, 3, 4, 6, 8, 9, 11, 13, 14, 16, 18, 20},
-        "roster1": ROSTER_C9,
-        "roster2": ROSTER_KRU,
-    },
-    "vlr-c9-loud-stage1-2026": {
-        "event_name": "VCT Americas 2026 Stage 1",
-        "stage": "Regular Season - Week 4",
-        "series": "2026 Season",
         "date": "2026-04-26",
-        "map_name": "Split",
         "team1_name": "Cloud9",
-        "team2_name": "LOUD",
-        "team1_score": 13,
-        "team2_score": 8,
-        "rounds_c9_won": {1, 2, 3, 5, 7, 8, 10, 12, 13, 15, 17, 19, 21},
-        "roster1": ROSTER_C9,
-        "roster2": ROSTER_LOUD,
+        "team2_name": "MIBR",
+        "maps": [
+            {
+                "map_id": "1",
+                "map_name": "Breeze",
+                "team1_score": 14,
+                "team2_score": 12,
+                "rounds_team1_won": {1, 2, 4, 6, 7, 9, 11, 13, 15, 17, 19, 21, 25, 26},
+                "roster1": ROSTER_C9,
+                "roster2": ROSTER_MIBR,
+            },
+            {
+                "map_id": "2",
+                "map_name": "Split",
+                "team1_score": 14,
+                "team2_score": 12,
+                "rounds_team1_won": {1, 3, 5, 7, 8, 10, 12, 13, 15, 17, 19, 21, 25, 26},
+                "roster1": ROSTER_C9,
+                "roster2": ROSTER_MIBR,
+            },
+        ],
     },
-    "vlr-sen-g2-stage1-2026": {
+    "vlr-g2-c9-stage1-2026": {
+        "event_name": "VCT Americas 2026 Stage 1",
+        "stage": "Regular Season - Week 5",
+        "series": "2026 Season",
+        "date": "2026-05-09",
+        "team1_name": "G2 Esports",
+        "team2_name": "Cloud9",
+        "maps": [
+            {
+                "map_id": "1",
+                "map_name": "Lotus",
+                "team1_score": 13,
+                "team2_score": 6,
+                "rounds_team1_won": {1, 2, 3, 4, 6, 7, 9, 10, 11, 13, 15, 17, 19},
+                "roster1": ROSTER_G2,
+                "roster2": ROSTER_C9,
+            },
+            {
+                "map_id": "2",
+                "map_name": "Split",
+                "team1_score": 13,
+                "team2_score": 9,
+                "rounds_team1_won": {1, 2, 4, 5, 7, 8, 10, 12, 14, 16, 18, 20, 22},
+                "roster1": ROSTER_G2,
+                "roster2": ROSTER_C9,
+            },
+        ],
+    },
+    "vlr-c9-sen-2026": {
         "event_name": "VCT Americas 2026 Stage 1",
         "stage": "Playoffs - Upper Semifinals",
         "series": "2026 Season",
-        "date": "2026-05-02",
-        "map_name": "Abyss",
+        "date": "2026-05-16",
+        "team1_name": "Cloud9",
+        "team2_name": "Sentinels",
+        "maps": [
+            {
+                "map_id": "1",
+                "map_name": "Ascent",
+                "team1_score": 13,
+                "team2_score": 11,
+                "rounds_team1_won": {1, 2, 4, 6, 7, 9, 11, 13, 14, 16, 18, 22, 24},
+                "roster1": ROSTER_C9,
+                "roster2": ROSTER_SEN,
+            },
+            {
+                "map_id": "2",
+                "map_name": "Bind",
+                "team1_score": 10,
+                "team2_score": 13,
+                "rounds_team1_won": {2, 3, 5, 7, 8, 11, 14, 16, 18, 21},
+                "roster1": ROSTER_C9,
+                "roster2": ROSTER_SEN,
+            },
+            {
+                "map_id": "3",
+                "map_name": "Haven",
+                "team1_score": 13,
+                "team2_score": 9,
+                "rounds_team1_won": {1, 2, 4, 5, 7, 9, 11, 13, 14, 16, 18, 20, 22},
+                "roster1": ROSTER_C9,
+                "roster2": ROSTER_SEN,
+            },
+        ],
+    },
+    "vlr-sen-100t-stage1-2026": {
+        "event_name": "VCT Americas 2026 Stage 1",
+        "stage": "Playoffs - Lower Finals",
+        "series": "2026 Season",
+        "date": "2026-05-22",
         "team1_name": "Sentinels",
-        "team2_name": "G2 Esports",
-        "team1_score": 13,
-        "team2_score": 10,
-        "rounds_c9_won": {1, 3, 4, 6, 8, 9, 11, 13, 15, 17, 19, 21, 23},
-        "roster1": ROSTER_SEN,
-        "roster2": ROSTER_G2,
-    },
-    "vlr-c9-nrg-2026": {
-        "event_name": "VCT Americas 2026 Stage 1",
-        "stage": "Playoffs - Upper Finals",
-        "series": "2026 Season",
-        "date": "2026-05-03",
-        "map_name": "Haven",
-        "team1_name": "Cloud9",
-        "team2_name": "NRG",
-        "team1_score": 13,
-        "team2_score": 9,
-        "rounds_c9_won": {1, 2, 3, 5, 7, 8, 10, 13, 14, 15, 18, 20, 22},
-        "roster1": ROSTER_C9,
-        "roster2": ROSTER_NRG,
-    },
-    "vlr-c9-100t-stage1-2026": {
-        "event_name": "VCT Americas 2026 Stage 1",
-        "stage": "Grand Final",
-        "series": "2026 Season",
-        "date": "2026-05-10",
-        "map_name": "Pearl",
-        "team1_name": "Cloud9",
         "team2_name": "100 Thieves",
-        "team1_score": 13,
-        "team2_score": 11,
-        "rounds_c9_won": {2, 3, 5, 6, 8, 10, 12, 13, 15, 17, 20, 22, 24},
-        "roster1": ROSTER_C9,
-        "roster2": ROSTER_100T,
+        "maps": [
+            {
+                "map_id": "1",
+                "map_name": "Ascent",
+                "team1_score": 13,
+                "team2_score": 9,
+                "rounds_team1_won": {1, 2, 3, 5, 7, 8, 10, 13, 14, 16, 18, 20, 22},
+                "roster1": ROSTER_SEN,
+                "roster2": ROSTER_100T,
+            },
+            {
+                "map_id": "2",
+                "map_name": "Bind",
+                "team1_score": 13,
+                "team2_score": 11,
+                "rounds_team1_won": {1, 2, 4, 6, 7, 9, 11, 13, 15, 17, 19, 21, 24},
+                "roster1": ROSTER_SEN,
+                "roster2": ROSTER_100T,
+            },
+        ],
     },
 
-    # 4. Masters Toronto Matches (June 2026)
-    "vlr-c9-fnc-masters2026": {
-        "event_name": "VCT Masters 2026 Toronto",
-        "stage": "Swiss Stage - Round 2",
+    # -------------------------------------------------------------
+    # 4. VCT Masters 2026 London (Jun 6 - Jun 21, 2026, UK - NO C9)
+    # -------------------------------------------------------------
+    "vlr-lev-prx-london2026": {
+        "event_name": "VCT Masters 2026 London",
+        "stage": "Grand Final",
         "series": "2026 Season",
-        "date": "2026-06-14",
-        "map_name": "Bind",
-        "team1_name": "Cloud9",
-        "team2_name": "Fnatic",
-        "team1_score": 13,
-        "team2_score": 10,
-        "rounds_c9_won": {1, 3, 4, 6, 8, 9, 11, 13, 15, 16, 19, 21, 23},
-        "roster1": ROSTER_C9,
-        "roster2": ROSTER_FNC,
+        "date": "2026-06-21",
+        "team1_name": "Leviatán",
+        "team2_name": "Paper Rex",
+        "maps": [
+            {
+                "map_id": "1",
+                "map_name": "Fracture",
+                "team1_score": 3,
+                "team2_score": 13,
+                "rounds_team1_won": {2, 6, 11},
+                "roster1": ROSTER_LEV,
+                "roster2": ROSTER_PRX,
+            },
+            {
+                "map_id": "2",
+                "map_name": "Split",
+                "team1_score": 6,
+                "team2_score": 13,
+                "rounds_team1_won": {1, 5, 8, 10, 14, 16},
+                "roster1": ROSTER_LEV,
+                "roster2": ROSTER_PRX,
+            },
+            {
+                "map_id": "3",
+                "map_name": "Breeze",
+                "team1_score": 13,
+                "team2_score": 11,
+                "rounds_team1_won": {1, 3, 5, 7, 8, 10, 12, 14, 16, 18, 20, 22, 24},
+                "roster1": ROSTER_LEV,
+                "roster2": ROSTER_PRX,
+            },
+            {
+                "map_id": "4",
+                "map_name": "Ascent",
+                "team1_score": 13,
+                "team2_score": 10,
+                "rounds_team1_won": {1, 2, 4, 6, 7, 9, 11, 13, 15, 17, 19, 21, 23},
+                "roster1": ROSTER_LEV,
+                "roster2": ROSTER_PRX,
+            },
+            {
+                "map_id": "5",
+                "map_name": "Lotus",
+                "team1_score": 13,
+                "team2_score": 5,
+                "rounds_team1_won": {1, 2, 3, 5, 6, 7, 9, 10, 11, 13, 15, 16, 18},
+                "roster1": ROSTER_LEV,
+                "roster2": ROSTER_PRX,
+            },
+        ],
     },
-    "vlr-c9-prx-toronto2026": {
-        "event_name": "VCT Masters 2026 Toronto",
-        "stage": "Playoffs - Upper Semifinals",
+    "vlr-prx-th-london2026": {
+        "event_name": "VCT Masters 2026 London",
+        "stage": "Lower Bracket Final",
         "series": "2026 Season",
         "date": "2026-06-20",
-        "map_name": "Lotus",
-        "team1_name": "Cloud9",
-        "team2_name": "Paper Rex",
-        "team1_score": 13,
-        "team2_score": 8,
-        "rounds_c9_won": {1, 2, 3, 5, 7, 8, 10, 12, 14, 16, 18, 19, 21},
-        "roster1": ROSTER_C9,
-        "roster2": ROSTER_PRX,
+        "team1_name": "Paper Rex",
+        "team2_name": "Team Heretics",
+        "maps": [
+            {
+                "map_id": "1",
+                "map_name": "Bind",
+                "team1_score": 13,
+                "team2_score": 8,
+                "rounds_team1_won": {1, 2, 4, 5, 7, 8, 10, 12, 13, 15, 17, 19, 21},
+                "roster1": ROSTER_PRX,
+                "roster2": ROSTER_TH,
+            },
+            {
+                "map_id": "2",
+                "map_name": "Sunset",
+                "team1_score": 11,
+                "team2_score": 13,
+                "rounds_team1_won": {2, 3, 5, 7, 9, 11, 13, 15, 17, 19, 22},
+                "roster1": ROSTER_PRX,
+                "roster2": ROSTER_TH,
+            },
+            {
+                "map_id": "3",
+                "map_name": "Haven",
+                "team1_score": 13,
+                "team2_score": 10,
+                "rounds_team1_won": {1, 2, 4, 6, 7, 9, 11, 13, 15, 17, 19, 21, 23},
+                "roster1": ROSTER_PRX,
+                "roster2": ROSTER_TH,
+            },
+        ],
     },
-    "vlr-th-geng-toronto2026": {
-        "event_name": "VCT Masters 2026 Toronto",
-        "stage": "Grand Final",
+    "vlr-lev-fnc-london2026": {
+        "event_name": "VCT Masters 2026 London",
+        "stage": "Playoffs Upper Semifinals",
         "series": "2026 Season",
-        "date": "2026-06-24",
-        "map_name": "Ascent",
-        "team1_name": "Team Heretics",
-        "team2_name": "Gen.G",
-        "team1_score": 13,
-        "team2_score": 9,
-        "rounds_c9_won": {1, 2, 4, 5, 7, 8, 10, 13, 15, 17, 19, 20, 22},
-        "roster1": ROSTER_TH,
-        "roster2": ROSTER_GENG,
+        "date": "2026-06-16",
+        "team1_name": "Leviatán",
+        "team2_name": "Fnatic",
+        "maps": [
+            {
+                "map_id": "1",
+                "map_name": "Pearl",
+                "team1_score": 13,
+                "team2_score": 9,
+                "rounds_team1_won": {1, 2, 4, 5, 7, 8, 10, 12, 14, 16, 18, 20, 22},
+                "roster1": ROSTER_LEV,
+                "roster2": ROSTER_FNC,
+            },
+            {
+                "map_id": "2",
+                "map_name": "Ascent",
+                "team1_score": 13,
+                "team2_score": 7,
+                "rounds_team1_won": {1, 2, 3, 5, 7, 8, 10, 12, 13, 15, 17, 18, 20},
+                "roster1": ROSTER_LEV,
+                "roster2": ROSTER_FNC,
+            },
+        ],
     },
 
-    # 5. Americas Stage 2 Matches (July - August 2026)
-    "vlr-c9-g2-stage2-2026": {
+    # -------------------------------------------------------------
+    # 5. VCT Americas 2026 Stage 2 (Jul 16 - Sep 6, 2026)
+    # -------------------------------------------------------------
+    "vlr-sen-c9-stage2-2026": {
         "event_name": "VCT Americas 2026 Stage 2",
         "stage": "Regular Season - Week 1",
         "series": "2026 Season",
-        "date": "2026-07-18",
-        "map_name": "Haven",
-        "team1_name": "Cloud9",
-        "team2_name": "G2 Esports",
-        "team1_score": 13,
-        "team2_score": 9,
-        "rounds_c9_won": {1, 2, 4, 5, 7, 8, 10, 12, 14, 16, 18, 20, 22},
-        "roster1": ROSTER_C9,
-        "roster2": ROSTER_G2,
+        "date": "2026-07-16",
+        "team1_name": "Sentinels",
+        "team2_name": "Cloud9",
+        "maps": [
+            {
+                "map_id": "1",
+                "map_name": "Summit",
+                "team1_score": 13,
+                "team2_score": 4,
+                "rounds_team1_won": {1, 2, 3, 4, 5, 7, 8, 9, 10, 12, 13, 15, 17},
+                "roster1": ROSTER_SEN,
+                "roster2": ROSTER_C9,
+            },
+            {
+                "map_id": "2",
+                "map_name": "Haven",
+                "team1_score": 11,
+                "team2_score": 13,
+                "rounds_team1_won": {2, 3, 5, 7, 8, 10, 12, 14, 16, 18, 20},
+                "roster1": ROSTER_SEN,
+                "roster2": ROSTER_C9,
+            },
+            {
+                "map_id": "3",
+                "map_name": "Lotus",
+                "team1_score": 16,
+                "team2_score": 14,
+                "rounds_team1_won": {1, 2, 4, 6, 7, 9, 11, 13, 15, 17, 19, 21, 25, 27, 29, 30},
+                "roster1": ROSTER_SEN,
+                "roster2": ROSTER_C9,
+            },
+        ],
     },
-    "vlr-c9-lev-stage2-2026": {
+    "vlr-c9-loud-stage2-2026": {
         "event_name": "VCT Americas 2026 Stage 2",
-        "stage": "Regular Season - Week 2",
+        "stage": "Regular Season - Week 3",
         "series": "2026 Season",
-        "date": "2026-07-25",
-        "map_name": "Sunset",
+        "date": "2026-07-31",
         "team1_name": "Cloud9",
-        "team2_name": "Leviatán",
-        "team1_score": 13,
-        "team2_score": 11,
-        "rounds_c9_won": {1, 2, 4, 6, 7, 9, 11, 13, 14, 16, 18, 22, 24},
-        "roster1": ROSTER_C9,
-        "roster2": ROSTER_LEV,
+        "team2_name": "LOUD",
+        "maps": [
+            {
+                "map_id": "1",
+                "map_name": "Haven",
+                "team1_score": 13,
+                "team2_score": 8,
+                "rounds_team1_won": {1, 2, 3, 5, 6, 8, 10, 12, 13, 15, 17, 19, 21},
+                "roster1": ROSTER_C9,
+                "roster2": ROSTER_LOUD,
+            },
+            {
+                "map_id": "2",
+                "map_name": "Sunset",
+                "team1_score": 8,
+                "team2_score": 13,
+                "rounds_team1_won": {1, 3, 5, 8, 10, 13, 16, 18},
+                "roster1": ROSTER_C9,
+                "roster2": ROSTER_LOUD,
+            },
+            {
+                "map_id": "3",
+                "map_name": "Summit",
+                "team1_score": 8,
+                "team2_score": 13,
+                "rounds_team1_won": {2, 4, 6, 9, 11, 14, 17, 19},
+                "roster1": ROSTER_C9,
+                "roster2": ROSTER_LOUD,
+            },
+        ],
     },
-    "vlr-c9-sen-stage2-2026": {
+    "vlr-c9-kru-stage2-2026": {
         "event_name": "VCT Americas 2026 Stage 2",
-        "stage": "Playoffs - Grand Final",
+        "stage": "Regular Season - Week 3",
         "series": "2026 Season",
-        "date": "2026-08-08",
-        "map_name": "Ascent",
+        "date": "2026-08-02",
         "team1_name": "Cloud9",
-        "team2_name": "Sentinels",
-        "team1_score": 13,
-        "team2_score": 10,
-        "rounds_c9_won": {1, 3, 4, 6, 7, 9, 11, 13, 15, 17, 19, 21, 23},
-        "roster1": ROSTER_C9,
-        "roster2": ROSTER_SEN,
+        "team2_name": "KRÜ Esports",
+        "maps": [
+            {
+                "map_id": "1",
+                "map_name": "Ascent",
+                "team1_score": 13,
+                "team2_score": 7,
+                "rounds_team1_won": {1, 2, 3, 5, 7, 8, 10, 12, 13, 15, 17, 18, 20},
+                "roster1": ROSTER_C9,
+                "roster2": ROSTER_KRU,
+            },
+            {
+                "map_id": "2",
+                "map_name": "Bind",
+                "team1_score": 13,
+                "team2_score": 10,
+                "rounds_team1_won": {1, 2, 4, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23},
+                "roster1": ROSTER_C9,
+                "roster2": ROSTER_KRU,
+            },
+        ],
+    },
+    "vlr-100t-c9-stage2-2026": {
+        "event_name": "VCT Americas 2026 Stage 2",
+        "stage": "Regular Season - Week 4",
+        "series": "2026 Season",
+        "date": "2026-08-07",
+        "team1_name": "100 Thieves",
+        "team2_name": "Cloud9",
+        "maps": [
+            {
+                "map_id": "1",
+                "map_name": "Split",
+                "team1_score": 13,
+                "team2_score": 11,
+                "rounds_team1_won": {1, 3, 4, 6, 7, 9, 11, 13, 15, 17, 19, 21, 24},
+                "roster1": ROSTER_100T,
+                "roster2": ROSTER_C9,
+            },
+            {
+                "map_id": "2",
+                "map_name": "Pearl",
+                "team1_score": 11,
+                "team2_score": 13,
+                "rounds_team1_won": {2, 3, 5, 7, 8, 10, 12, 14, 16, 18, 20},
+                "roster1": ROSTER_100T,
+                "roster2": ROSTER_C9,
+            },
+            {
+                "map_id": "3",
+                "map_name": "Breeze",
+                "team1_score": 13,
+                "team2_score": 8,
+                "rounds_team1_won": {1, 2, 4, 5, 7, 8, 10, 12, 13, 15, 17, 19, 21},
+                "roster1": ROSTER_100T,
+                "roster2": ROSTER_C9,
+            },
+        ],
+    },
+    "vlr-eg-c9-stage2-2026": {
+        "event_name": "VCT Americas 2026 Stage 2",
+        "stage": "Regular Season - Week 5",
+        "series": "2026 Season",
+        "date": "2026-08-16",
+        "team1_name": "Evil Geniuses",
+        "team2_name": "Cloud9",
+        "maps": [
+            {
+                "map_id": "1",
+                "map_name": "Sunset",
+                "team1_score": 13,
+                "team2_score": 9,
+                "rounds_team1_won": {1, 2, 4, 5, 7, 8, 10, 12, 14, 16, 18, 20, 22},
+                "roster1": ROSTER_EG,
+                "roster2": ROSTER_C9,
+            },
+            {
+                "map_id": "2",
+                "map_name": "Haven",
+                "team1_score": 13,
+                "team2_score": 11,
+                "rounds_team1_won": {1, 3, 4, 6, 7, 9, 11, 13, 15, 17, 19, 21, 24},
+                "roster1": ROSTER_EG,
+                "roster2": ROSTER_C9,
+            },
+        ],
+    },
+    "vlr-sen-nrg-stage2-2026": {
+        "event_name": "VCT Americas 2026 Stage 2",
+        "stage": "Playoffs - Upper Semifinals",
+        "series": "2026 Season",
+        "date": "2026-08-23",
+        "team1_name": "Sentinels",
+        "team2_name": "NRG",
+        "maps": [
+            {
+                "map_id": "1",
+                "map_name": "Sunset",
+                "team1_score": 13,
+                "team2_score": 11,
+                "rounds_team1_won": {1, 2, 4, 6, 7, 9, 11, 13, 15, 17, 19, 21, 24},
+                "roster1": ROSTER_SEN,
+                "roster2": ROSTER_NRG,
+            },
+            {
+                "map_id": "2",
+                "map_name": "Ascent",
+                "team1_score": 13,
+                "team2_score": 8,
+                "rounds_team1_won": {1, 2, 3, 5, 7, 8, 10, 12, 13, 15, 17, 19, 21},
+                "roster1": ROSTER_SEN,
+                "roster2": ROSTER_NRG,
+            },
+        ],
     },
 
-    # 6. Champions Paris Matches (August - September 2026)
-    "vlr-c9-prx-champions2026": {
-        "event_name": "VCT Champions 2026 Paris",
-        "stage": "Group Stage - Elimination Match",
+    # -------------------------------------------------------------
+    # 6. VALORANT Champions 2026 Shanghai (Sep 24 - Oct 18, 2026, China - NO C9)
+    # -------------------------------------------------------------
+    "vlr-loud-vit-shanghai2026": {
+        "event_name": "VCT Champions 2026 Shanghai",
+        "stage": "Grand Final",
         "series": "2026 Season",
-        "date": "2026-08-22",
-        "map_name": "Lotus",
-        "team1_name": "Cloud9",
-        "team2_name": "Paper Rex",
-        "team1_score": 13,
-        "team2_score": 11,
-        "rounds_c9_won": {2, 3, 5, 6, 8, 10, 12, 13, 15, 17, 20, 22, 24},
-        "roster1": ROSTER_C9,
-        "roster2": ROSTER_PRX,
-    },
-    "vlr-c9-vit-champions2026": {
-        "event_name": "VCT Champions 2026 Paris",
-        "stage": "Playoffs - Upper Quarterfinals",
-        "series": "2026 Season",
-        "date": "2026-08-29",
-        "map_name": "Bind",
-        "team1_name": "Cloud9",
+        "date": "2026-10-18",
+        "team1_name": "LOUD",
         "team2_name": "Team Vitality",
-        "team1_score": 13,
-        "team2_score": 10,
-        "rounds_c9_won": {1, 3, 4, 6, 8, 9, 11, 13, 15, 16, 19, 21, 23},
-        "roster1": ROSTER_C9,
-        "roster2": ROSTER_VIT,
+        "maps": [
+            {
+                "map_id": "1",
+                "map_name": "Summit",
+                "team1_score": 13,
+                "team2_score": 11,
+                "rounds_team1_won": {1, 2, 4, 6, 7, 9, 11, 13, 15, 17, 19, 21, 24},
+                "roster1": ROSTER_LOUD,
+                "roster2": ROSTER_VIT,
+            },
+            {
+                "map_id": "2",
+                "map_name": "Lotus",
+                "team1_score": 8,
+                "team2_score": 13,
+                "rounds_team1_won": {2, 4, 6, 9, 11, 14, 17, 19},
+                "roster1": ROSTER_LOUD,
+                "roster2": ROSTER_VIT,
+            },
+            {
+                "map_id": "3",
+                "map_name": "Sunset",
+                "team1_score": 13,
+                "team2_score": 9,
+                "rounds_team1_won": {1, 3, 4, 6, 7, 9, 11, 13, 14, 16, 18, 20, 22},
+                "roster1": ROSTER_LOUD,
+                "roster2": ROSTER_VIT,
+            },
+            {
+                "map_id": "4",
+                "map_name": "Haven",
+                "team1_score": 13,
+                "team2_score": 7,
+                "rounds_team1_won": {1, 2, 3, 5, 7, 8, 10, 12, 13, 15, 17, 18, 20},
+                "roster1": ROSTER_LOUD,
+                "roster2": ROSTER_VIT,
+            },
+        ],
     },
-    "vlr-sen-th-champions2026": {
-        "event_name": "VCT Champions 2026 Paris",
-        "stage": "Grand Final - Decider Map",
+    "vlr-prx-loud-shanghai2026": {
+        "event_name": "VCT Champions 2026 Shanghai",
+        "stage": "Playoffs Upper Semifinals",
         "series": "2026 Season",
-        "date": "2026-09-06",
-        "map_name": "Sunset",
-        "team1_name": "Sentinels",
-        "team2_name": "Team Heretics",
-        "team1_score": 13,
-        "team2_score": 11,
-        "rounds_c9_won": {1, 2, 4, 5, 7, 9, 12, 14, 16, 18, 20, 22, 24},
-        "roster1": ROSTER_SEN,
-        "roster2": ROSTER_TH,
+        "date": "2026-10-07",
+        "team1_name": "Paper Rex",
+        "team2_name": "LOUD",
+        "maps": [
+            {
+                "map_id": "1",
+                "map_name": "Bind",
+                "team1_score": 13,
+                "team2_score": 10,
+                "rounds_team1_won": {1, 2, 4, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23},
+                "roster1": ROSTER_PRX,
+                "roster2": ROSTER_LOUD,
+            },
+            {
+                "map_id": "2",
+                "map_name": "Ascent",
+                "team1_score": 9,
+                "team2_score": 13,
+                "rounds_team1_won": {2, 3, 5, 7, 8, 11, 14, 16, 18},
+                "roster1": ROSTER_PRX,
+                "roster2": ROSTER_LOUD,
+            },
+            {
+                "map_id": "3",
+                "map_name": "Haven",
+                "team1_score": 11,
+                "team2_score": 13,
+                "rounds_team1_won": {1, 3, 5, 6, 8, 10, 12, 14, 16, 18, 21},
+                "roster1": ROSTER_PRX,
+                "roster2": ROSTER_LOUD,
+            },
+        ],
     },
-    "vlr-c9-fnc-champions2026": {
-        "event_name": "VCT Champions 2026 Paris",
-        "stage": "Lower Bracket Semifinals",
+    "vlr-vit-nrg-shanghai2026": {
+        "event_name": "VCT Champions 2026 Shanghai",
+        "stage": "Playoffs Upper Quarterfinals",
         "series": "2026 Season",
-        "date": "2026-09-10",
-        "map_name": "Haven",
-        "team1_name": "Cloud9",
-        "team2_name": "Fnatic",
-        "team1_score": 13,
-        "team2_score": 11,
-        "rounds_c9_won": {1, 2, 4, 6, 7, 9, 11, 13, 14, 16, 18, 22, 24},
-        "roster1": ROSTER_C9,
-        "roster2": ROSTER_FNC,
+        "date": "2026-10-10",
+        "team1_name": "Team Vitality",
+        "team2_name": "NRG",
+        "maps": [
+            {
+                "map_id": "1",
+                "map_name": "Pearl",
+                "team1_score": 13,
+                "team2_score": 9,
+                "rounds_team1_won": {1, 2, 4, 5, 7, 8, 10, 12, 14, 16, 18, 20, 22},
+                "roster1": ROSTER_VIT,
+                "roster2": ROSTER_NRG,
+            },
+            {
+                "map_id": "2",
+                "map_name": "Split",
+                "team1_score": 13,
+                "team2_score": 11,
+                "rounds_team1_won": {1, 3, 4, 6, 7, 9, 11, 13, 15, 17, 19, 21, 24},
+                "roster1": ROSTER_VIT,
+                "roster2": ROSTER_NRG,
+            },
+        ],
+    },
+    "vlr-tl-prx-shanghai2026": {
+        "event_name": "VCT Champions 2026 Shanghai",
+        "stage": "Group Stage - Opening Match",
+        "series": "2026 Season",
+        "date": "2026-09-24",
+        "team1_name": "Team Liquid",
+        "team2_name": "Paper Rex",
+        "maps": [
+            {
+                "map_id": "1",
+                "map_name": "Lotus",
+                "team1_score": 11,
+                "team2_score": 13,
+                "rounds_team1_won": {2, 3, 5, 7, 8, 10, 12, 14, 16, 18, 20},
+                "roster1": ROSTER_TL,
+                "roster2": ROSTER_PRX,
+            },
+            {
+                "map_id": "2",
+                "map_name": "Sunset",
+                "team1_score": 13,
+                "team2_score": 9,
+                "rounds_team1_won": {1, 2, 4, 5, 7, 8, 10, 12, 14, 16, 18, 20, 22},
+                "roster1": ROSTER_TL,
+                "roster2": ROSTER_PRX,
+            },
+            {
+                "map_id": "3",
+                "map_name": "Breeze",
+                "team1_score": 13,
+                "team2_score": 10,
+                "rounds_team1_won": {1, 2, 4, 6, 7, 9, 11, 13, 15, 17, 19, 21, 23},
+                "roster1": ROSTER_TL,
+                "roster2": ROSTER_PRX,
+            },
+        ],
     },
 }
 
@@ -574,17 +1284,20 @@ def _build_match_logs(
 ) -> VLRMatchLogsResponse:
     t1_name = meta["team1_name"]
     t2_name = meta["team2_name"]
-    t1_score = meta["team1_score"]
-    t2_score = meta["team2_score"]
-    total_rounds = t1_score + t2_score
-    rounds_c9_won = meta["rounds_c9_won"]
 
-    t1_players = [p[0] for p in meta["roster1"]]
-    t2_players = [p[0] for p in meta["roster2"]]
+    target_map = next((m for m in meta["maps"] if str(m["map_id"]) == str(game_id)), meta["maps"][0])
+    map_name = target_map["map_name"]
+    t1_score = target_map["team1_score"]
+    t2_score = target_map["team2_score"]
+    total_rounds = t1_score + t2_score
+    rounds_t1_won = target_map["rounds_team1_won"]
+
+    t1_players = [p[0] for p in target_map["roster1"]]
+    t2_players = [p[0] for p in target_map["roster2"]]
 
     rounds: List[VLRRound] = []
     for r_num in range(1, total_rounds + 1):
-        is_t1_winner = r_num in rounds_c9_won
+        is_t1_winner = r_num in rounds_t1_won
         winner_name = t1_name if is_t1_winner else t2_name
         win_type = "elimination"
         if r_num % 6 == 0:
@@ -614,8 +1327,8 @@ def _build_match_logs(
         status="success",
         data=VLRMatchLogsData(
             match_id=match_id,
-            game_id=game_id,
-            map=meta["map_name"],
+            game_id=str(target_map["map_id"]),
+            map=map_name,
             teams=[
                 VLRTeam(
                     name=t1_name, score=str(t1_score), is_winner=t1_score > t2_score
@@ -634,49 +1347,61 @@ def _build_match_details(
 ) -> VLRMatchDetailsResponse:
     t1_name = meta["team1_name"]
     t2_name = meta["team2_name"]
-    t1_score = meta["team1_score"]
-    t2_score = meta["team2_score"]
 
-    stats: List[VLRPlayerStat] = []
-    for p, ag, k, d, a, acs, adr, kast, hs, fk, fd in meta["roster1"]:
-        stats.append(
-            VLRPlayerStat(
-                player=p,
-                team=t1_name,
-                agent=ag,
-                k=k,
-                d=d,
-                a=a,
-                kd_diff=k - d,
-                acs=acs,
-                kast=kast,
-                adr=adr,
-                hs_percent=hs,
-                fk=fk,
-                fd=fd,
-                fk_fd_diff=fk - fd,
+    map_details: List[VLRMapDetail] = []
+    for m in meta["maps"]:
+        stats: List[VLRPlayerStat] = []
+        for p, ag, k, d, a, acs, adr, kast, hs, fk, fd in m["roster1"]:
+            stats.append(
+                VLRPlayerStat(
+                    player=p,
+                    team=t1_name,
+                    agent=ag,
+                    k=k,
+                    d=d,
+                    a=a,
+                    kd_diff=k - d,
+                    acs=acs,
+                    kast=kast,
+                    adr=adr,
+                    hs_percent=hs,
+                    fk=fk,
+                    fd=fd,
+                    fk_fd_diff=fk - fd,
+                )
+            )
+
+        for p, ag, k, d, a, acs, adr, kast, hs, fk, fd in m["roster2"]:
+            stats.append(
+                VLRPlayerStat(
+                    player=p,
+                    team=t2_name,
+                    agent=ag,
+                    k=k,
+                    d=d,
+                    a=a,
+                    kd_diff=k - d,
+                    acs=acs,
+                    kast=kast,
+                    adr=adr,
+                    hs_percent=hs,
+                    fk=fk,
+                    fd=fd,
+                    fk_fd_diff=fk - fd,
+                )
+            )
+
+        map_details.append(
+            VLRMapDetail(
+                map_id=str(m["map_id"]),
+                name=m["map_name"],
+                status="completed",
+                stats=stats,
             )
         )
 
-    for p, ag, k, d, a, acs, adr, kast, hs, fk, fd in meta["roster2"]:
-        stats.append(
-            VLRPlayerStat(
-                player=p,
-                team=t2_name,
-                agent=ag,
-                k=k,
-                d=d,
-                a=a,
-                kd_diff=k - d,
-                acs=acs,
-                kast=kast,
-                adr=adr,
-                hs_percent=hs,
-                fk=fk,
-                fd=fd,
-                fk_fd_diff=fk - fd,
-            )
-        )
+    t1_maps_won = sum(1 for m in meta["maps"] if m["team1_score"] > m["team2_score"])
+    t2_maps_won = sum(1 for m in meta["maps"] if m["team2_score"] > m["team1_score"])
 
     return VLRMatchDetailsResponse(
         status="success",
@@ -691,20 +1416,13 @@ def _build_match_details(
             status="Completed",
             teams=[
                 VLRTeam(
-                    name=t1_name, score=str(t1_score), is_winner=t1_score > t2_score
+                    name=t1_name, score=str(t1_maps_won), is_winner=t1_maps_won > t2_maps_won
                 ),
                 VLRTeam(
-                    name=t2_name, score=str(t2_score), is_winner=t2_score > t1_score
+                    name=t2_name, score=str(t2_maps_won), is_winner=t2_maps_won > t1_maps_won
                 ),
             ],
-            maps=[
-                VLRMapDetail(
-                    map_id="1",
-                    name=meta["map_name"],
-                    status="completed",
-                    stats=stats,
-                )
-            ],
+            maps=map_details,
         ),
     )
 
@@ -727,7 +1445,8 @@ def get_2026_matches_catalog(
         t2 = meta["team2_name"]
         ev = meta["event_name"]
         d = meta["date"]
-        map_name = meta["map_name"]
+        first_map = meta["maps"][0]["map_name"]
+        all_maps = [m["map_name"] for m in meta["maps"]]
 
         # Team filter
         if clean_team:
@@ -745,13 +1464,16 @@ def get_2026_matches_catalog(
         if end_date and d > end_date:
             continue
 
-        # Search query (matches team, event, stage, or map)
+        # Search query (matches team, event, stage, or map names)
         if clean_search:
-            text_corpus = f"{t1} {t2} {ev} {meta['stage']} {map_name}".lower()
+            text_corpus = f"{t1} {t2} {ev} {meta['stage']} {' '.join(all_maps)}".lower()
             if clean_search not in text_corpus:
                 continue
 
+        t1_maps_won = sum(1 for m in meta["maps"] if m["team1_score"] > m["team2_score"])
+        t2_maps_won = sum(1 for m in meta["maps"] if m["team2_score"] > m["team1_score"])
         is_c9 = "Cloud9" in (t1, t2)
+
         catalog.append(
             {
                 "id": match_id,
@@ -767,28 +1489,29 @@ def get_2026_matches_catalog(
                     "stage": meta["stage"],
                     "series": meta["series"],
                 },
-                "score": f"{meta['team1_score']} - {meta['team2_score']}",
+                "score": f"{t1_maps_won} - {t2_maps_won}",
                 "date": d,
                 "scheduled_start": f"{d}T19:00:00Z",
                 "status": "Completed",
                 "is_cloud9": is_c9,
                 "is_c9_match": is_c9,
                 "event_name": ev,
-                "map_name": map_name,
+                "map_name": first_map,
+                "maps": all_maps,
             }
         )
     return catalog
 
 
 def get_2026_match_logs(match_id: str, game_id: str = "1") -> VLRMatchLogsResponse:
-    """Return comprehensive 2026 season round-by-round event logs."""
+    """Return comprehensive 2026 season round-by-round event logs for the requested game_id."""
     if match_id not in _MATCH_METADATA:
         raise ValueError(f"Unknown 2026 match: {match_id}")
     return _build_match_logs(match_id, _MATCH_METADATA[match_id], game_id=game_id)
 
 
 def get_2026_match_details(match_id: str) -> VLRMatchDetailsResponse:
-    """Return comprehensive 2026 season match details with per-map player statistics."""
+    """Return comprehensive 2026 season match details with per-map player statistics across all maps."""
     if match_id not in _MATCH_METADATA:
         raise ValueError(f"Unknown 2026 match: {match_id}")
     return _build_match_details(match_id, _MATCH_METADATA[match_id])

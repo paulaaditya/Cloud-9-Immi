@@ -356,4 +356,26 @@ describe("CoachDashboard Layout (Wireframe Specification)", () => {
       expect.any(Object)
     );
   });
+
+  it("renders all map tabs and switches active map data when Map 2 is clicked", async () => {
+    await act(async () => {
+      render(<CoachDashboardPage />);
+    });
+
+    const map1Btn = screen.getByRole("button", { name: /map 1: ascent/i });
+    const map2Btn = screen.getByRole("button", { name: /map 2: bind/i });
+    expect(map1Btn).toBeInTheDocument();
+    expect(map2Btn).toBeInTheDocument();
+
+    await act(async () => {
+      fireEvent.click(map2Btn);
+    });
+
+    expect(useCoachStore.getState().currentGameIndex).toBe(1);
+    expect(useCoachStore.getState().currentRound).toBe(1);
+    expect(global.fetch).toHaveBeenCalledWith(
+      expect.stringContaining("game_id=2"),
+      expect.any(Object)
+    );
+  });
 });

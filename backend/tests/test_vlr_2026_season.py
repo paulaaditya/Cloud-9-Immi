@@ -48,7 +48,7 @@ def test_all_2026_season_matches_loadable():
         logs = get_2026_match_logs(match_id)
         assert logs.status == "success"
         assert logs.data.match_id == match_id
-        assert len(logs.data.rounds) >= 20
+        assert len(logs.data.rounds) >= 13
         assert len(logs.data.teams) == 2
 
         # Verify round consistency
@@ -105,3 +105,48 @@ def test_2026_catalog_filtering():
     # Filter by date range
     early_season = get_2026_matches_catalog(start_date="2026-02-01", end_date="2026-03-31")
     assert len(early_season) >= 4
+
+
+def test_cloud9_only_in_vct_americas():
+    catalog = get_2026_matches_catalog()
+    for item in catalog:
+        team1 = item.get("team1") or item.get("team1_name", "")
+        team2 = item.get("team2") or item.get("team2_name", "")
+        event_name = item.get("event", {}).get("name") or item.get("event_name", "")
+        if "cloud9" in team1.lower() or "cloud9" in team2.lower():
+            assert "VCT Americas" in event_name, f"Cloud9 found in non-Americas event: {event_name}"
+            assert "Masters" not in event_name, f"Cloud9 should not be in Masters: {event_name}"
+            assert "Champions" not in event_name, f"Cloud9 should not be in Champions: {event_name}"
+
+
+def test_tournaments_present_in_catalog():
+    catalog = get_2026_matches_catalog()
+    events = {item.get("event", {}).get("name") or item.get("event_name", "") for item in catalog}
+    assert any("Kickoff" in e for e in events), "Kickoff missing"
+    assert any("Stage 1" in e for e in events), "Stage 1 missing"
+    assert any("Stage 2" in e for e in events), "Stage 2 missing"
+    assert any("Santiago" in e for e in events), "Santiago missing"
+    assert any("London" in e for e in events), "London missing"
+    assert any("Shanghai" in e for e in events), "Shanghai missing"
+
+
+def test_all_matches_have_multiple_maps():
+    catalog = get_2026_matches_catalog()
+    for item in catalog:
+        match_id = item["id"] if "id" in item else item["match_id"]
+        details = get_2026_match_details(match_id)
+        assert len(details.data.maps) >= 2, f"Match {match_id} has fewer than 2 maps"
+        map_ids = [m.map_id for m in details.data.maps]
+        assert map_ids[0] == "1"
+        assert map_ids[1] == "2"
+
+
+def test_distinct_logs_for_different_game_ids():
+    match_id = "vlr-c9-loud-kickoff2026"
+    logs_map1 = get_2026_match_logs(match_id, game_id="1")
+    logs_map2 = get_2026_match_logs(match_id, game_id="2")
+
+    assert logs_map1.data.game_id == "1"
+    assert logs_map2.data.game_id == "2"
+    assert logs_map1.data.map != logs_map2.data.map
+

@@ -32,7 +32,7 @@ def test_featured_series_returns_2026_season():
     assert c9_match["team1_name"] == "Cloud9"
     assert c9_match["team2_name"] == "Sentinels"
 
-    non_c9_match = next((s for s in series if s.get("series_id") == "vlr-sen-th-champions2026"), None)
+    non_c9_match = next((s for s in series if s.get("series_id") == "vlr-loud-vit-shanghai2026"), None)
     assert non_c9_match is not None
     assert non_c9_match["is_cloud9"] is False
 
@@ -47,11 +47,11 @@ def test_featured_series_api_filtering():
     assert all(s["is_cloud9"] for s in c9_series)
 
     # Filter by event
-    resp = client.get("/api/v1/featured-series?event=VCT Masters 2026 Bangkok")
+    resp = client.get("/api/v1/featured-series?event=VCT Masters 2026 Santiago")
     assert resp.status_code == 200
-    bangkok_series = resp.json()
-    assert len(bangkok_series) >= 3
-    assert all("Bangkok" in s["event_name"] for s in bangkok_series)
+    santiago_series = resp.json()
+    assert len(santiago_series) >= 3
+    assert all("Santiago" in s["event_name"] for s in santiago_series)
 
     # Filter by date range
     resp = client.get("/api/v1/featured-series?start_date=2026-02-01&end_date=2026-03-31")
@@ -93,7 +93,7 @@ def test_vlr_matches_returns_2026_matches_in_results():
 
     match_ids = [m.get("id") or m.get("match_id") for m in matches]
     assert "vlr-c9-sen-2026" in match_ids
-    assert "vlr-c9-nrg-2026" in match_ids
+    assert "vlr-c9-nrg-kickoff2026" in match_ids
     assert any("2026" in str(mid) for mid in match_ids)
 
 
@@ -136,3 +136,28 @@ def test_featured_series_alternate_route():
     assert resp.status_code == 200
     data = resp.json()
     assert len(data) >= 4
+
+
+def test_coaching_report_multi_map_series():
+    """Verify GET /api/v1/vlr/match/{match_id}/coaching-report reflects all maps and active map telemetry."""
+    # Map 1 request
+    resp1 = client.get("/api/v1/vlr/match/vlr-c9-loud-kickoff2026/coaching-report?game_id=1")
+    assert resp1.status_code == 200
+    data1 = resp1.json()
+    assert data1["total_games"] == 2
+    assert len(data1["games"]) == 2
+    assert data1["selected_game_index"] == 0
+    assert data1["games"][0]["map_name"] == "Haven"
+    assert data1["games"][1]["map_name"] == "Abyss"
+    assert len(data1["games"][0]["rounds"]) == 20
+
+    # Map 2 request
+    resp2 = client.get("/api/v1/vlr/match/vlr-c9-loud-kickoff2026/coaching-report?game_id=2")
+    assert resp2.status_code == 200
+    data2 = resp2.json()
+    assert data2["total_games"] == 2
+    assert len(data2["games"]) == 2
+    assert data2["selected_game_index"] == 1
+    assert data2["games"][1]["map_name"] == "Abyss"
+    assert len(data2["games"][1]["rounds"]) == 24
+

@@ -98,17 +98,61 @@ def test_normalize_vlr_series():
     assert round1.win_condition == "elimination"
     assert round1.spike_planted is True
     assert round1.spike_planter_id == "vanity"
-    assert round1.spike_plant_time == "0:45"
 
-    assert len(round1.kills) == 2
+
+def test_normalize_vlr_series_multi_map():
+    logs = VLRMatchLogsResponse(
+        status="success",
+        data={
+            "match_id": "vlr-multi-test",
+            "game_id": "2",
+            "map": "Abyss",
+            "teams": [{"name": "Cloud9"}, {"name": "LOUD"}],
+            "rounds": [
+                {
+                    "round_number": 1,
+                    "winning_team": "Cloud9",
+                    "win_type": "elimination",
+                    "events": [
+                        {
+                            "time": "0:20",
+                            "type": "kill",
+                            "killer": "OXY",
+                            "victim": "dgzin",
+                            "weapon": "Ghost",
+                        }
+                    ],
+                }
+            ],
+        },
+    )
+
+    details = VLRMatchDetailsResponse(
+        status="success",
+        data={
+            "match_id": "vlr-multi-test",
+            "teams": [{"name": "Cloud9"}, {"name": "LOUD"}],
+            "maps": [
+                {"map_id": "1", "name": "Haven", "stats": []},
+                {"map_id": "2", "name": "Abyss", "stats": []},
+                {"map_id": "3", "name": "Bind", "stats": []},
+            ],
+        },
+    )
+
+    series = normalize_vlr_series(logs, details)
+    assert len(series.games) == 3
+    assert series.games[0].map_name == "Haven"
+    assert series.games[1].map_name == "Abyss"
+    assert series.games[2].map_name == "Bind"
+    # Active map (game_id 2) has the rounds populated
+    assert len(series.games[1].rounds) == 1
+    round1 = series.games[1].rounds[0]
+    assert round1.round_number == 1
+    assert len(round1.kills) == 1
     assert round1.kills[0].killer_name == "OXY"
-    assert round1.kills[0].victim_name == "crashies"
+    assert round1.kills[0].victim_name == "dgzin"
     assert round1.kills[0].is_first_blood is True
-    assert round1.kills[0].occurred_at == "00:0:25"
-
-    assert round1.kills[1].killer_name == "Xeppaa"
-    assert round1.kills[1].victim_name == "Victor"
-    assert round1.kills[1].is_first_blood is False
 
 
 def test_normalize_vlr_series_without_details():

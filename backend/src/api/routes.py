@@ -118,12 +118,13 @@ async def get_vlr_coaching_report(
             status_code=502, detail=f"Failed to fetch data from VLR: {str(e)}"
         )
 
+    active_game_id = str(game_id or "1")
     parsed = normalize_vlr_series(logs, details)
 
     # Extract player stats dictionary for active map
     player_stats_map: Dict[str, VLRPlayerStat] = {}
     if details and details.data.maps:
-        matched_map = next((m for m in details.data.maps if m.map_id == game_id), None)
+        matched_map = next((m for m in details.data.maps if str(m.map_id) == active_game_id), None)
         target_map = matched_map or details.data.maps[0]
         for s in target_map.stats:
             player_stats_map[s.player] = s
@@ -135,9 +136,13 @@ async def get_vlr_coaching_report(
         if isinstance(target_team, str) and target_team.strip()
         else parsed.team1_name
     )
-    if parsed.games:
-        game = parsed.games[0]
-        for r in game.rounds:
+
+    active_game = next((g for g in parsed.games if str(g.game_id) == active_game_id), None)
+    if not active_game and parsed.games:
+        active_game = parsed.games[0]
+
+    if active_game:
+        for r in active_game.rounds:
             round_mistakes = detect_vlr_round_mistakes(
                 r, player_stats_map, target_team=coach_team
             )
@@ -146,6 +151,13 @@ async def get_vlr_coaching_report(
                 r, round_mistakes, player_stats_map
             )
             round_insights.append(insight)
+
+    # Calculate selected game index
+    selected_index = 0
+    for idx, g in enumerate(parsed.games):
+        if str(g.game_id) == active_game_id:
+            selected_index = idx
+            break
 
     # Construct roster dictionary for report card enrichment
     roster_dict = {
@@ -165,7 +177,7 @@ async def get_vlr_coaching_report(
         "team1_name": parsed.team1_name,
         "team2_name": parsed.team2_name,
         "total_games": len(parsed.games),
-        "selected_game_index": 0,
+        "selected_game_index": selected_index,
         "games": parsed.games,
         "player_stats": player_stats_map,
         "total_mistakes_detected": len(all_mistakes),
@@ -202,26 +214,30 @@ async def get_vlr_round_insight(
             status_code=502, detail=f"Failed to fetch data from VLR: {str(e)}"
         )
 
+    active_game_id = str(game_id or "1")
     parsed = normalize_vlr_series(logs, details)
 
     player_stats_map: Dict[str, VLRPlayerStat] = {}
     if details and details.data.maps:
-        matched_map = next((m for m in details.data.maps if m.map_id == game_id), None)
+        matched_map = next((m for m in details.data.maps if str(m.map_id) == active_game_id), None)
         target_map = matched_map or details.data.maps[0]
         for s in target_map.stats:
             player_stats_map[s.player] = s
 
-    if not parsed.games:
+    active_game = next((g for g in parsed.games if str(g.game_id) == active_game_id), None)
+    if not active_game and parsed.games:
+        active_game = parsed.games[0]
+
+    if not active_game:
         raise HTTPException(
             status_code=404, detail=f"No games found for match {match_id}"
         )
 
-    game = parsed.games[0]
-    target_round = next((r for r in game.rounds if r.round_number == round_num), None)
+    target_round = next((r for r in active_game.rounds if r.round_number == round_num), None)
     if not target_round:
         raise HTTPException(
             status_code=404,
-            detail=f"Round {round_num} not found in match {match_id}",
+            detail=f"Round {round_num} not found in match {match_id} (game {active_game_id})",
         )
 
     coach_team = (
