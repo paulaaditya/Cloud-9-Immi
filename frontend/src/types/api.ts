@@ -113,13 +113,19 @@ export interface RoundCoachingInsight {
 
 export interface FeaturedSeries {
   series_id: string;
-  event: string;
+  event: string | { name: string; stage?: string; series?: string };
+  event_name?: string;
   teams: string;
   stage?: string;
   is_cloud9?: boolean;
   scheduled_start?: string;
   team1_name?: string;
   team2_name?: string;
+  team1?: string;
+  team2?: string;
+  score?: string;
+  date?: string;
+  map_name?: string;
   is_c9_match?: boolean;
 }
 
