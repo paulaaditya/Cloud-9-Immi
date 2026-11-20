@@ -179,7 +179,14 @@ def build_replay(series_id: str, game_id: str) -> Optional[Dict[str, Any]]:
             names[tid] = clean_team_name(nm)
     rounds = []
     for r in game["rounds"]:
-        fr = frames_all.get(r["n"], [])
+        fr = list(frames_all.get(r["n"], []))
+        start = {
+            p["id"]: [int(round(p["sx"])), int(round(p["sy"]))]
+            for p in r["players"]
+            if p.get("sx") is not None and p.get("sy") is not None
+        }
+        if start and (not fr or fr[0]["t"] > 0.5):
+            fr.insert(0, {"t": 0.0, "p": start})  # where everyone stands when the round goes live
         rounds.append(
             {
                 "n": r["n"],

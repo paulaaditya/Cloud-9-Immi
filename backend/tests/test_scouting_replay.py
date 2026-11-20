@@ -48,6 +48,8 @@ def test_replay_has_dense_ordered_frames_for_every_round():
     for r in rep["rounds"]:
         ts = [f["t"] for f in r["frames"]]
         assert ts == sorted(ts) and all(len(r["players"]) == 10 for _ in [0])
+        if r["frames"]:
+            assert r["frames"][0]["t"] <= 0.5 and len(r["frames"][0]["p"]) >= 8  # starts from the live-round positions
         assert r["end"]["type"] in ("elimination", "detonation", "defuse", "time", "unknown")
 
 

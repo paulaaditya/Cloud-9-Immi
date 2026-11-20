@@ -128,7 +128,7 @@ function CardView() {
 
 export default function CounterCardPage() {
   return (
-    <main className="min-h-screen bg-white">
+    <main className="h-screen overflow-y-auto print:h-auto print:overflow-visible bg-white">
       <Suspense fallback={<p className="p-6 text-sm">Loading…</p>}>
         <CardView />
       </Suspense>

@@ -112,8 +112,11 @@ body {
   .no-print {
     display: none !important;
   }
+  html,
   body {
     background: #ffffff !important;
+    height: auto !important;
+    overflow: visible !important;
   }
   @page {
     margin: 12mm;

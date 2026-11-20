@@ -30,9 +30,10 @@ function Viewer({ rep }: { rep: ReplayData }) {
   useEffect(() => {
     setRoundN(rep.rounds[0]?.n ?? 1);
   }, [rep]);
+  // Selecting a round (or opening a match) starts it playing from the start of the live round.
   useEffect(() => {
     setT(0);
-    setPlaying(false);
+    setPlaying(true);
   }, [roundN, rep]);
 
   useEffect(() => {
@@ -330,7 +331,7 @@ function ReplayPage() {
   const open = (sid: string, gid: string) => router.push(`/scout/replay?team=${encodeURIComponent(teamId)}&series=${sid}&game=${gid}`);
 
   return (
-    <main className="c9-bg-ethereal min-h-screen text-slate-800">
+    <main className="c9-bg-ethereal h-screen overflow-y-auto print:h-auto print:overflow-visible text-slate-800">
       <header className="flex flex-wrap items-center gap-3 border-b border-sky-200 bg-white/85 px-5 py-3">
         <Cloud9Logo size={44} />
         <div>

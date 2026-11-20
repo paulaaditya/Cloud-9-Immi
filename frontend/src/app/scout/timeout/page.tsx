@@ -76,7 +76,7 @@ export default function TimeoutPage() {
   const team = teams.find((t) => t.team_id === teamId);
 
   return (
-    <main className="c9-bg-ethereal min-h-screen text-slate-800">
+    <main className="c9-bg-ethereal h-screen overflow-y-auto print:h-auto print:overflow-visible text-slate-800">
       <header className="no-print flex flex-wrap items-center gap-3 border-b border-sky-200 bg-white/85 px-5 py-3">
         <Cloud9Logo size={44} />
         <div>

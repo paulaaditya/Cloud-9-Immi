@@ -30,6 +30,13 @@ const TOOLS = [
     cta: "Open Scout",
   },
   {
+    href: "/scout/replay",
+    name: "2D replay",
+    question: "What actually happened in that round?",
+    detail: "Step through any match on the map: player positions over time, kills, the plant, the kill feed and the economy.",
+    cta: "Open the replay",
+  },
+  {
     href: "/scout/timeout",
     name: "Timeout advisor",
     question: "What should we change before the next rounds?",
@@ -54,13 +61,14 @@ const PRINCIPLES = [
 
 export default function Home() {
   return (
-    <main className="c9-bg-ethereal min-h-screen text-slate-800">
+    <main className="c9-bg-ethereal h-screen overflow-y-auto print:h-auto print:overflow-visible text-slate-800">
       <header className="mx-auto flex max-w-[1100px] flex-wrap items-center gap-3 px-5 py-4">
         <Cloud9Logo size={44} />
         <span className="text-lg font-black tracking-tight text-sky-900">C9 Oracle</span>
         <nav className="ml-auto flex flex-wrap items-center gap-4 text-sm font-semibold text-sky-800">
           <Link href="/scout" className="hover:underline">Scout</Link>
           <Link href="/scout/timeout" className="hover:underline">Timeout advisor</Link>
+          <Link href="/scout/replay" className="hover:underline">2D replay</Link>
           <Link href="/coach" className="hover:underline">Post-match coach</Link>
         </nav>
       </header>
