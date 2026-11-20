@@ -364,6 +364,39 @@ export default function ScoutPage() {
                   </tbody>
                 </table>
               </Panel>
+              {op.evidence.operator_kills > 0 && (
+                <Panel title="Operator kills by player">
+                  {[...op.players]
+                    .filter((p) => p.op_kills > 0)
+                    .sort((a, b) => b.op_kills - a.op_kills)
+                    .map((p) => (
+                      <Bar
+                        key={p.id}
+                        label={`${p.name} (${p.op_rounds} Operator rounds, ${p.op_rounds ? (p.op_kills / p.op_rounds).toFixed(2) : "–"} kills each)`}
+                        value={p.op_kills}
+                        max={Math.max(1, ...op.players.map((x) => x.op_kills))}
+                      />
+                    ))}
+                  <p className="mt-2 text-[11px] text-slate-500">
+                    Operator rounds are counted from each player&apos;s start-of-round inventory. A kill can also come from an Operator
+                    picked up mid-round, so kills per round can exceed what the round count suggests.
+                  </p>
+                </Panel>
+              )}
+              {op.by_buy.length > 0 && (
+                <Panel title="Operator by buy type">
+                  {op.by_buy.map((b) => (
+                    <Bar
+                      key={b.buy}
+                      label={`${titleCase(b.buy)} (${b.with_op}/${b.rounds} rounds)`}
+                      value={b.pct}
+                      max={100}
+                      suffix="%"
+                      hint={`${b.op_kills} kills`}
+                    />
+                  ))}
+                </Panel>
+              )}
               <Panel title="Operator kill timing">
                 {op.kill_timing.map((b) => (
                   <Bar key={b.bucket} label={b.bucket} value={b.pct} max={100} suffix="%" hint={`${b.kills} kills`} />

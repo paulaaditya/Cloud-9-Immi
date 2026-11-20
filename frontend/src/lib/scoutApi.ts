@@ -101,6 +101,7 @@ export interface OperatorResult {
   };
   by_side: Record<string, { rounds: number; with_op: number; pct: number }>;
   by_map: { map: string; rounds: number; with_op: number; pct: number }[];
+  by_buy: { buy: string; rounds: number; with_op: number; op_kills: number; pct: number }[];
   players: OperatorPlayer[];
   kill_timing: { bucket: string; kills: number; pct: number }[];
   kill_distance_from_spawn_m: { median: number | null; p25: number | null; p75: number | null; n: number };
