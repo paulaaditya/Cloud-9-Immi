@@ -307,10 +307,10 @@ git commit -m "feat(frontend): set 2026 vct season as primary match catalog and 
 ---
 
 ### Task 5.1: Live Browser Verification
-- [ ] **Step 1:** Confirm backend and frontend servers are running.
-- [ ] **Step 2:** Browser subagent navigates to `http://localhost:3000`.
-- [ ] **Step 3:** Switch between VCT Americas 2026, VCT Masters 2026, and VCT Champions 2026 matches.
-- [ ] **Step 4:** Step through rounds and verify AI Assistant Coach HUD updates with zero console errors.
+- [x] **Step 1:** Confirm backend and frontend servers are running.
+- [x] **Step 2:** Browser subagent navigates to `http://localhost:3000`.
+- [x] **Step 3:** Switch between VCT Americas 2026, VCT Masters 2026, and VCT Champions 2026 matches.
+- [x] **Step 4:** Step through rounds and verify AI Assistant Coach HUD updates with zero console errors.
 
 ---
 
