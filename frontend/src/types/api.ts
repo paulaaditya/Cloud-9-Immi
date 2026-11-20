@@ -55,6 +55,7 @@ export interface AttributedMistake {
   player_id: string;
   player_name?: string | null;
   character_name?: string | null;
+  team_name?: string | null;
   round_number: number;
   occurred_at: string;
   win_prob_delta: number;
@@ -66,10 +67,12 @@ export interface PlayerReportCard {
   player_id: string;
   player_name?: string | null;
   character_name?: string | null;
+  team_name?: string | null;
   mistake_count: number;
   cumulative_xrw_tax: number;
   primary_vulnerability: string;
   actionable_summary: string;
+  mistakes?: AttributedMistake[];
 }
 
 export interface PrescribedDrill {
@@ -79,6 +82,33 @@ export interface PrescribedDrill {
   drill_objective: string;
   setup_steps: string[];
   success_criterion: string;
+}
+
+export interface VLRPlayerStat {
+  player: string;
+  team?: string | null;
+  agent?: string | null;
+  k: number;
+  d: number;
+  a: number;
+  kd_diff?: number | null;
+  acs?: number | null;
+  kast?: string | number | null;
+  adr?: number | null;
+  hs_percent?: string | number | null;
+  fk: number;
+  fd: number;
+  fk_fd_diff?: number | null;
+}
+
+export interface RoundCoachingInsight {
+  round_number: number;
+  narrative: string;
+  blunder_culprit?: string | null;
+  win_prob_tax: number;
+  tactical_directive: string;
+  player_stat_verdict?: string | null;
+  recommended_drill: PrescribedDrill;
 }
 
 export interface FeaturedSeries {
@@ -110,8 +140,10 @@ export interface CoachingReportResponse {
   games: ParsedGame[];
   roster?: Record<string, RosterEntry>;
   featured_series?: FeaturedSeries[];
+  player_stats?: Record<string, VLRPlayerStat>;
   total_mistakes_detected: number;
   mistakes: AttributedMistake[];
   player_reports: PlayerReportCard[];
   prescribed_drills: PrescribedDrill[];
+  round_insights?: RoundCoachingInsight[];
 }
