@@ -4,7 +4,7 @@ import { RoundCoachingInsight } from "@/types/api";
 describe("coachStore VLR extensions", () => {
   beforeEach(() => {
     useCoachStore.setState({
-      selectedSeriesId: "2748743",
+      selectedSeriesId: "vlr-c9-sen-2026",
       currentGameIndex: 0,
       selectedPlayerId: null,
       selectedMistakeId: null,
@@ -14,6 +14,12 @@ describe("coachStore VLR extensions", () => {
       selectedMistake: null,
       selectedRoundInsight: null,
     });
+  });
+
+  it("initializes with vlr-c9-sen-2026 as default selectedSeriesId", () => {
+    // Reset to initial store configuration
+    const initialStore = useCoachStore.getInitialState();
+    expect(initialStore.selectedSeriesId).toBe("vlr-c9-sen-2026");
   });
 
   it("manages matchId and selectedRoundInsight correctly", () => {

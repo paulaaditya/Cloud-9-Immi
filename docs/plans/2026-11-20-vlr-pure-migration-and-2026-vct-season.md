@@ -287,11 +287,11 @@ git commit -m "feat(api): streamline routes exclusively on vlr 2026 vct season t
     5. Sentinels vs Team Heretics (VCT Champions 2026)
   - Remove all remaining references to legacy GRID match IDs (`2748746`, `2748743`, etc.)
 
-- [ ] **Step 1: Update CoachDashboard.test.tsx with 2026 season assertions**
-- [ ] **Step 2: Run test to verify failure**
-- [ ] **Step 3: Update coachStore.ts and page.tsx**
-- [ ] **Step 4: Run test to verify pass**
-- [ ] **Step 5: Commit**
+- [x] **Step 1: Update CoachDashboard.test.tsx with 2026 season assertions**
+- [x] **Step 2: Run test to verify failure**
+- [x] **Step 3: Update coachStore.ts and page.tsx**
+- [x] **Step 4: Run test to verify pass**
+- [x] **Step 5: Commit**
 
 ```bash
 git add c9-oracle/frontend/src/store/coachStore.ts c9-oracle/frontend/src/app/page.tsx c9-oracle/frontend/src/components/CoachDashboard.test.tsx

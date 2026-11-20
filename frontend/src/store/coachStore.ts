@@ -29,7 +29,7 @@ interface CoachStoreState {
 }
 
 export const useCoachStore = create<CoachStoreState>((set) => ({
-  selectedSeriesId: "2748743",
+  selectedSeriesId: "vlr-c9-sen-2026",
   currentGameIndex: 0,
   selectedPlayerId: null,
   selectedMistakeId: null,

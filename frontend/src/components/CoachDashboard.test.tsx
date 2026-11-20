@@ -15,7 +15,7 @@ describe("CoachDashboard Layout (Wireframe Specification)", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     useCoachStore.setState({
-      selectedSeriesId: "2748746",
+      selectedSeriesId: "vlr-c9-sen-2026",
       currentGameIndex: 0,
       selectedPlayerId: null,
       selectedMistakeId: null,
@@ -36,9 +36,10 @@ describe("CoachDashboard Layout (Wireframe Specification)", () => {
     expect(screen.getByText("CLOUD9")).toBeInTheDocument();
     expect(screen.getByText("ORACLE")).toBeInTheDocument();
 
-    // Series selector
+    // Series selector defaults to 2026 VCT Americas Cloud9 vs Sentinels
     const seriesSelect = screen.getByRole("combobox", { name: /select series/i });
     expect(seriesSelect).toBeInTheDocument();
+    expect(seriesSelect).toHaveValue("vlr-c9-sen-2026");
 
     // Map switcher buttons
     expect(screen.getByRole("button", { name: /map 1: ascent/i })).toBeInTheDocument();
@@ -139,22 +140,71 @@ describe("CoachDashboard Layout (Wireframe Specification)", () => {
     });
 
     const reportCard = screen.getByTestId("player-error-report-card");
-    expect(within(reportCard).getByText(/280 ACS/i)).toBeInTheDocument();
-    expect(within(reportCard).getByText(/5 FK \/ 2 FD/i)).toBeInTheDocument();
+    expect(within(reportCard).getByText(/284 ACS/i)).toBeInTheDocument();
+    expect(within(reportCard).getByText(/7 FK \/ 2 FD/i)).toBeInTheDocument();
   });
 
-  it("fetches from VLR endpoint when a VLR match ID is selected", async () => {
+  it("allows switching matches across VCT Americas 2026, VCT Masters 2026, and VCT Champions 2026", async () => {
+    await act(async () => {
+      render(<CoachDashboardPage />);
+    });
+
+    const seriesSelect = screen.getByRole("combobox", { name: /select series/i });
+    expect(seriesSelect).toHaveValue("vlr-c9-sen-2026");
+
+    // Switch to VCT Americas 2026 Playoffs (Cloud9 vs NRG)
+    await act(async () => {
+      fireEvent.change(seriesSelect, { target: { value: "vlr-c9-nrg-2026" } });
+    });
+    expect(useCoachStore.getState().selectedSeriesId).toBe("vlr-c9-nrg-2026");
+    expect(global.fetch).toHaveBeenCalledWith(
+      expect.stringContaining("/api/v1/vlr/match/vlr-c9-nrg-2026/coaching-report"),
+      expect.any(Object)
+    );
+
+    // Switch to VCT Masters 2026 Santiago (Cloud9 vs Fnatic)
+    await act(async () => {
+      fireEvent.change(seriesSelect, { target: { value: "vlr-c9-fnc-masters2026" } });
+    });
+    expect(useCoachStore.getState().selectedSeriesId).toBe("vlr-c9-fnc-masters2026");
+    expect(global.fetch).toHaveBeenCalledWith(
+      expect.stringContaining("/api/v1/vlr/match/vlr-c9-fnc-masters2026/coaching-report"),
+      expect.any(Object)
+    );
+
+    // Switch to VCT Champions 2026 Paris (Cloud9 vs Paper Rex)
+    await act(async () => {
+      fireEvent.change(seriesSelect, { target: { value: "vlr-c9-prx-champions2026" } });
+    });
+    expect(useCoachStore.getState().selectedSeriesId).toBe("vlr-c9-prx-champions2026");
+    expect(global.fetch).toHaveBeenCalledWith(
+      expect.stringContaining("/api/v1/vlr/match/vlr-c9-prx-champions2026/coaching-report"),
+      expect.any(Object)
+    );
+
+    // Switch to VCT Champions 2026 Paris Grand Final (Sentinels vs Team Heretics)
+    await act(async () => {
+      fireEvent.change(seriesSelect, { target: { value: "vlr-sen-th-champions2026" } });
+    });
+    expect(useCoachStore.getState().selectedSeriesId).toBe("vlr-sen-th-champions2026");
+    expect(global.fetch).toHaveBeenCalledWith(
+      expect.stringContaining("/api/v1/vlr/match/vlr-sen-th-champions2026/coaching-report"),
+      expect.any(Object)
+    );
+  });
+
+  it("fetches directly from VLR endpoint when a 2026 match ID is selected without legacy prefix stripping", async () => {
     await act(async () => {
       render(<CoachDashboardPage />);
     });
 
     const seriesSelect = screen.getByRole("combobox", { name: /select series/i });
     await act(async () => {
-      fireEvent.change(seriesSelect, { target: { value: "vlr-773435" } });
+      fireEvent.change(seriesSelect, { target: { value: "vlr-c9-sen-2026" } });
     });
 
     expect(global.fetch).toHaveBeenCalledWith(
-      expect.stringContaining("/api/v1/vlr/match/773435/coaching-report"),
+      expect.stringContaining("/api/v1/vlr/match/vlr-c9-sen-2026/coaching-report"),
       expect.any(Object)
     );
   });
