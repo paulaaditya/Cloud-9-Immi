@@ -18,9 +18,17 @@ llm_coach = LLMCoachService(model_backend="mock")
 
 @router.get("/featured-series", response_model=List[Dict[str, Any]])
 @router.get("/series/featured", response_model=List[Dict[str, Any]])
-def get_featured_series_endpoint():
-    """Return catalog of featured 2026 VCT Season matches."""
-    catalog = get_2026_matches_catalog()
+def get_featured_series_endpoint(
+    team: Optional[str] = Query(None, description="Filter matches by team name"),
+    event: Optional[str] = Query(None, description="Filter matches by event name"),
+    start_date: Optional[str] = Query(None, description="Filter matches on or after YYYY-MM-DD"),
+    end_date: Optional[str] = Query(None, description="Filter matches on or before YYYY-MM-DD"),
+    search: Optional[str] = Query(None, description="Search query across teams, event, and map"),
+):
+    """Return catalog of featured 2026 VCT Season matches with optional filtering."""
+    catalog = get_2026_matches_catalog(
+        team=team, event=event, start_date=start_date, end_date=end_date, search=search
+    )
     results = []
     for item in catalog:
         entry = dict(item)

@@ -37,6 +37,29 @@ def test_featured_series_returns_2026_season():
     assert non_c9_match["is_cloud9"] is False
 
 
+def test_featured_series_api_filtering():
+    """Verify GET /api/v1/featured-series supports team, event, date, and search filters."""
+    # Filter by team
+    resp = client.get("/api/v1/featured-series?team=Cloud9")
+    assert resp.status_code == 200
+    c9_series = resp.json()
+    assert len(c9_series) >= 10
+    assert all(s["is_cloud9"] for s in c9_series)
+
+    # Filter by event
+    resp = client.get("/api/v1/featured-series?event=VCT Masters 2026 Bangkok")
+    assert resp.status_code == 200
+    bangkok_series = resp.json()
+    assert len(bangkok_series) >= 3
+    assert all("Bangkok" in s["event_name"] for s in bangkok_series)
+
+    # Filter by date range
+    resp = client.get("/api/v1/featured-series?start_date=2026-02-01&end_date=2026-03-31")
+    assert resp.status_code == 200
+    early_series = resp.json()
+    assert len(early_series) >= 4
+
+
 def test_series_coaching_report_delegates_to_vlr_2026():
     """Verify GET /api/v1/series/{series_id}/coaching-report works with 2026 match ID."""
     resp = client.get("/api/v1/series/vlr-c9-sen-2026/coaching-report")

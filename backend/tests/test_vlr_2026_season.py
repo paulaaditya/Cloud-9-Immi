@@ -78,3 +78,30 @@ def test_unknown_2026_match_raises_value_error():
 
     with pytest.raises(ValueError):
         get_2026_match_details("vlr-unknown-9999")
+
+
+def test_2026_catalog_has_expanded_season_matches():
+    catalog = get_2026_matches_catalog()
+    assert len(catalog) >= 20
+    # Verify 2026 rosters: Sentinels has N4RRATE, not TenZ
+    sen_match = next(m for m in catalog if m["match_id"] == "vlr-c9-sen-2026")
+    details = get_2026_match_details(sen_match["match_id"])
+    players = [p.player for p in details.data.maps[0].stats]
+    assert "N4RRATE" in players
+    assert "TenZ" not in players
+
+
+def test_2026_catalog_filtering():
+    # Filter by team
+    c9_matches = get_2026_matches_catalog(team="Cloud9")
+    assert len(c9_matches) >= 10
+    assert all("Cloud9" in (m["team1"], m["team2"]) for m in c9_matches)
+
+    # Filter by event
+    kickoff = get_2026_matches_catalog(event="VCT Americas 2026 Kickoff")
+    assert len(kickoff) >= 3
+    assert all("Kickoff" in m["event"]["name"] for m in kickoff)
+
+    # Filter by date range
+    early_season = get_2026_matches_catalog(start_date="2026-02-01", end_date="2026-03-31")
+    assert len(early_season) >= 4
