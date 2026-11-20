@@ -30,14 +30,14 @@
 **Files:**
 - Modify/Stage: `c9-oracle/backend/*`, `c9-oracle/frontend/*`, `c9-oracle/docs/*`
 
-- [ ] **Step 1: Run pytest backend test suite**
-- [ ] **Step 2: Run jest frontend test suite**
-- [ ] **Step 3: Stage all relevant changed and untracked files in c9-oracle**
+- [x] **Step 1: Run pytest backend test suite**
+- [x] **Step 2: Run jest frontend test suite**
+- [x] **Step 3: Stage all relevant changed and untracked files in c9-oracle**
 
 ---
 
 ### Task 2: Commit and Push to Remote
 
-- [ ] **Step 1: Commit staged changes with conventional commit message**
-- [ ] **Step 2: Push commits to origin/main**
-- [ ] **Step 3: Verify git status confirms working tree clean and up to date with origin/main**
+- [x] **Step 1: Commit staged changes with conventional commit message**
+- [x] **Step 2: Push commits to origin/main**
+- [x] **Step 3: Verify git status confirms working tree clean and up to date with origin/main**
