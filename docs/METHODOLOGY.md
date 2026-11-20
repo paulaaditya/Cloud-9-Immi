@@ -35,6 +35,10 @@ The feed has no site labels. `sites.py` clusters spike-plant positions across th
 
 **Counter-card** (`card.py`): runs the three profilers for one map and arranges their own advice lines into three plans (attacking them, defending against them, their Operator) with the evidence and confidence of each. It adds no analysis of its own.
 
+**Timeout advisor** (`timeout.py`): the caller is the team taking the timeout and the scouted team is the opponent. Inputs are the map, the opponent's side next round, their run going in (+k won the last k rounds, -k lost the last k, computed from round order) and optionally the sites they planted in recent rounds. The run is bucketed as behind (lost 2 or more), ahead (won 2 or more) or even. The attack or defense profile is run twice, once for that situation and once as the baseline. The situation profile is used only if it has at least 10 plants or setups, otherwise the baseline is used and the page says so. Up to three adjustments are chosen in a fixed order: the likely site (or lightest defended site), a live tell (a site planted in at least 3 recent rounds and 25 points above its baseline share), a weak spot, a buying shift (15 points or more more or fewer eco/half buys in the situation), pace, and Operator. The feed does carry timeout events, but they name no team, so timeout history is not used.
+
+**Gemini wording layer** (`ai/gemini.py`, optional): turns the advisor's lines into a short timeout call. It sends only those lines, the model is told to use nothing else, and the answer is thrown away if it contains any number that is not in the lines. No raw match data is sent, and nothing is trained or fine-tuned.
+
 ## 6. Confidence and advice rules
 
 - Confidence is by rounds analysed: high at 80 or more, medium at 25 or more, otherwise low.
@@ -57,5 +61,7 @@ python -m pytest -q                     # tests that need the dataset skip thems
 ```
 
 ## 9. Outside data
+
+Gemini is used only as an optional wording layer (section 5) and is off without a key. Check the hackathon's rules on outside AI services before using it in a submission.
 
 VLR.gg map win rates and rosters are available through a self-hosted [vlrggapi](https://github.com/axsddlr/vlrggapi) client (`backend/src/vlr/client.py`). vlrggapi is an unofficial scraper. Before this is used in a submission, check vlr.gg's terms and the hackathon's rules on outside data.

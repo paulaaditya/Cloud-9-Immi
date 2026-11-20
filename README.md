@@ -15,7 +15,10 @@ Scout reads the GRID feeds and ability supplements for all 857 VALORANT series (
 | **Operator profiler** | Who holds the Operator, when, and on what buy? | Cloud9 held one in 102 of 962 rounds (10.6%). OXY on Jett holds 97 of them, 93 on defense. Operators appear only on full buys (100 of 102 rounds). |
 | **Defensive setups** | How do they spread their defenders across the sites early in a round? | On Lotus, with 0-1 defenders on Site 1 at about 15 s they won 50% of rounds (70) against 68% with 2+ (28). |
 | **Attack executes** | Where do they plant, how fast, and with what utility? | On Lotus, Site 3 is 35.5% of rounds and Site 2 is their weaker hit (44% won over 25 rounds, against 76% on Site 3). |
+| **Timeout advisor** (`/scout/timeout`) | What should we change before the next rounds? | Enter their map, side, run (for example lost the last two) and recent plants. On Lotus, attacking after a two-round losing run, it expects Site 3 (36.6% of plants, 15 rounds) and flags "3 of the last 4 on Site 3" against 35.5% normally. |
 | **Counter-card** (`/scout/card`) | What do we do about them on this map? | One printable page: how to attack them, how to defend against them, and what to do about their Operator. Save it as a PDF from the print dialog. |
+
+The timeout advisor compares how an opponent plays in the current score situation (after losing or winning two or more rounds) with their baseline, and returns up to three adjustments with the rounds behind each. The feed does not say which team called a timeout, so it uses the score situation rather than timeout history. An optional Gemini layer can word the advice as a short timeout call (see below).
 
 Common to every tab: filters (team, map, side, agent, player, patch, buy type, recent matches, and an option to exclude the low-precision VCT Americas 2025 feeds), the rounds and matches behind each number, and a high/medium/low confidence badge. Counter-play lines are frequency based and phrased as leads to confirm in VOD. The approach is described in [docs/METHODOLOGY.md](docs/METHODOLOGY.md).
 
@@ -25,6 +28,7 @@ Common to every tab: filters (team, map, side, agent, player, patch, buy type, r
 - The feeds carry no site labels. Sites are found by clustering where attackers plant the spike and are named Site 1, 2, 3 from left to right on the map. They are not matched to Valorant's site letters.
 - The radar images for Corrode and Summit could not be validated against telemetry, so Scout draws those on a plain grid. Summit has too few plants for reliable sites.
 - Win rates are descriptive, not causal, and small cells are noise. The page states the rounds behind each figure.
+- The timeout advisor is only as strong as its slices: a situation with fewer than 10 usable rounds falls back to the overall picture, and the page says so.
 - VLR.gg map win rates and rosters (via a self-hosted vlrggapi) are fetched by the backend (`/api/v1/scout/teams/{team}/vlr`) but are not shown in the UI yet.
 
 ```bash
@@ -136,6 +140,8 @@ The coaching engine automatically maps vulnerabilities to structured drills from
 
 The Scout engine (extractor, buy types, site detection, setups, attack profile, counter-card, VLR client) and its tests were built with Claude Code driving the work from a written plan (`docs/plans/`, `docs/HACKATHON_VALORANT_IDEAS.md`). Every claim in this README was checked against a run of the code before it was written down.
 
+**Gemini (optional, runtime).** The timeout advisor can ask Gemini to word its advice as a short timeout call. It is off unless `GEMINI_API_KEY` is set in a git-ignored `.env` (`GEMINI_MODEL` picks the model). Gemini receives only the advisor's aggregated lines, never raw match data, is told to use nothing else, and its answer is discarded if it contains a number that is not in those lines. Nothing is trained or fine-tuned. If the call fails or is rejected, the page shows the plain advice. Check the hackathon's rules on outside AI services before enabling it in a submission.
+
 JetBrains tools: TODO(author): list the JetBrains IDEs and the JetBrains AI Assistant features you actually used, and for what. The earlier version of this section named PyCharm Professional, WebStorm, strict MyPy and AI Assistant tasks. MyPy is not configured in this repository, and the rest could not be verified from the code, so it was removed rather than left in.
 
 ---
@@ -243,7 +249,7 @@ cd backend
 .venv\Scripts\python -m pytest -q
 ```
 
-At the time of writing: 76 passed.
+At the time of writing: 86 passed.
 
 ### End-to-End Pipeline Test
 
