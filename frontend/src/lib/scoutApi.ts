@@ -1,0 +1,178 @@
+export const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+
+export interface TeamSummary {
+  team_id: string;
+  name: string;
+  series_count: number;
+  events: string[];
+}
+
+export interface ScoutOptions {
+  team_ids: string[];
+  series: number;
+  rounds: number;
+  date_range: [string, string];
+  maps: { map: string; rounds: number }[];
+  patches: { patch: string; rounds: number }[];
+  agents: { agent: string; rounds: number }[];
+  abilities: { ability: string; casts: number }[];
+  players: { id: string; name: string; rounds: number }[];
+  events: { event: string; series: number }[];
+  categories: string[];
+}
+
+export interface Hotspot {
+  rank: number;
+  x: number;
+  y: number;
+  nx: number | null;
+  ny: number | null;
+  casts: number;
+  share_of_casts_pct: number;
+  rounds_with: number;
+  rounds_total: number;
+  rounds_with_pct: number;
+  median_t: number;
+  p25_t: number;
+  p75_t: number;
+  top_abilities: { ability: string; casts: number }[];
+  top_players: { player: string; casts: number }[];
+}
+
+export interface ScoutPoint {
+  nx: number | null;
+  ny: number | null;
+  t: number;
+  player: string;
+  ability?: string;
+}
+
+export interface UtilityResult {
+  filters: Record<string, unknown>;
+  map: string | null;
+  evidence: {
+    series: number;
+    rounds_analyzed: number;
+    rounds_with_event: number;
+    rounds_with_event_pct: number;
+    casts: number;
+    low_rate_rounds_pct: number;
+    dropped_low_quality_casts: number;
+    confidence: "high" | "medium" | "low";
+    points_returned: number;
+  };
+  hotspots: Hotspot[];
+  by_ability: { ability: string; casts: number }[];
+  by_category: { category: string; casts: number }[];
+  by_player: { player: string; casts: number }[];
+  by_map: { map: string; rounds: number; casts: number }[];
+  timing: { bucket_start: number; casts: number }[];
+  points: ScoutPoint[];
+  insights: string[];
+  counter_notes: string[];
+}
+
+export interface OperatorPlayer {
+  id: string;
+  name: string;
+  rounds_played: number;
+  op_rounds: number;
+  op_share_of_team_op_rounds_pct: number;
+  op_rate_when_playing_pct: number;
+  main_op_agent: string | null;
+  agents: { agent: string; rounds: number }[];
+  median_loadout_with_op: number | null;
+  op_kills: number;
+  sides: Record<string, number>;
+}
+
+export interface OperatorResult {
+  filters: Record<string, unknown>;
+  map: string | null;
+  evidence: {
+    series: number;
+    rounds_analyzed: number;
+    rounds_with_operator: number;
+    rounds_with_operator_pct: number;
+    operator_kills: number;
+    low_rate_rounds_pct: number;
+    confidence: "high" | "medium" | "low";
+    rounds_with_two_or_more_operators: number;
+  };
+  by_side: Record<string, { rounds: number; with_op: number; pct: number }>;
+  by_map: { map: string; rounds: number; with_op: number; pct: number }[];
+  players: OperatorPlayer[];
+  kill_timing: { bucket: string; kills: number; pct: number }[];
+  kill_distance_from_spawn_m: { median: number | null; p25: number | null; p75: number | null; n: number };
+  median_loadout_with_op: number | null;
+  hotspots: Hotspot[];
+  points: ScoutPoint[];
+  insights: string[];
+  counter_notes: string[];
+}
+
+export interface ScoutFilters {
+  maps: string;
+  side: "" | "attacker" | "defender";
+  agents: string;
+  players: string;
+  abilities: string[];
+  categories: string[];
+  patches: string;
+  excludeLowRate: boolean;
+  lastN: number | "";
+}
+
+export const EMPTY_FILTERS: ScoutFilters = {
+  maps: "",
+  side: "",
+  agents: "",
+  players: "",
+  abilities: [],
+  categories: [],
+  patches: "",
+  excludeLowRate: false,
+  lastN: "",
+};
+
+function qs(f: ScoutFilters, kind: "utility" | "operator"): string {
+  const p = new URLSearchParams();
+  if (f.maps) p.set("maps", f.maps);
+  if (f.side) p.set("side", f.side);
+  if (f.agents) p.set("agents", f.agents);
+  if (f.players) p.set("players", f.players);
+  if (f.patches) p.set("patches", f.patches);
+  if (f.excludeLowRate) p.set("exclude_low_rate", "true");
+  if (f.lastN) p.set("last_n_series", String(f.lastN));
+  if (kind === "utility") {
+    if (f.abilities.length) p.set("abilities", f.abilities.join(","));
+    if (f.categories.length) p.set("categories", f.categories.join(","));
+  }
+  return p.toString();
+}
+
+async function getJson<T>(url: string, signal?: AbortSignal): Promise<T> {
+  const res = await fetch(url, { signal });
+  if (!res.ok) {
+    let detail = res.statusText;
+    try {
+      detail = (await res.json()).detail ?? detail;
+    } catch {
+      /* ignore */
+    }
+    throw new Error(`${res.status}: ${detail}`);
+  }
+  return res.json() as Promise<T>;
+}
+
+export const fetchTeams = (signal?: AbortSignal) =>
+  getJson<TeamSummary[]>(`${API_BASE}/api/v1/scout/teams`, signal);
+
+export const fetchOptions = (teamId: string, signal?: AbortSignal) =>
+  getJson<ScoutOptions>(`${API_BASE}/api/v1/scout/teams/${encodeURIComponent(teamId)}/options`, signal);
+
+export const fetchUtility = (teamId: string, f: ScoutFilters, signal?: AbortSignal) =>
+  getJson<UtilityResult>(`${API_BASE}/api/v1/scout/teams/${encodeURIComponent(teamId)}/utility?${qs(f, "utility")}`, signal);
+
+export const fetchOperator = (teamId: string, f: ScoutFilters, signal?: AbortSignal) =>
+  getJson<OperatorResult>(`${API_BASE}/api/v1/scout/teams/${encodeURIComponent(teamId)}/operator?${qs(f, "operator")}`, signal);

@@ -1,6 +1,32 @@
 # C9 Oracle: VALORANT Assistant Coach and Micro-Mistake Attribution
 
-C9 Oracle is an automated coaching and performance analytics platform engineered for the Cloud9 x JetBrains "Sky's the Limit" 2026 Hackathon (Category 1: Comprehensive Assistant Coach).
+C9 Oracle is a VALORANT scouting and coaching platform built for the Cloud9 x JetBrains "Sky's the Limit" 2026 Hackathon, Category 1 (VAL/GC): Tactical Scouting, Utility Placement & Operator Profiler. It has two parts:
+
+- **Scout** (`/scout`): filterable opponent utility heatmaps and an Operator profiler, with the sample size shown on every result.
+- **Post-match coach** (`/`): the original xRW win-probability and micro-mistake analysis, usable for self-scouting.
+
+### Scout: what it answers
+
+Scout reads the official GRID feeds and ability supplements for all 857 VALORANT series (1.4 million casts) and answers coach-style questions with the evidence behind them, for example: "Cloud9 holds an Operator in 102 of 962 rounds (10.6%); OXY on Jett carries 95% of them, almost all on defense."
+
+- **Utility Placement & Ability Analysis:** where a team casts placeable utility (Cypher, Killjoy, Vyse, Chamber, Deadlock, Veto), recon, smokes, stall and flashes, as a heatmap with numbered hotspots. Each hotspot reports the rounds it appears in ("50 of 81 rounds") and the typical timing in the round.
+- **Operator Tendency Profiler:** how often a team has an Operator (per side and per map), who holds it, the agent, the buy loadout, and when and how far from spawn its kills happen.
+- **Filters:** team, map, side, agent, player, ability or utility type, patch, recent matches, and an option to exclude the low-precision VCT Americas 2025 feeds.
+- **Evidence and confidence:** rounds analyzed, matches, event counts and a high/medium/low confidence badge on every result.
+- **Counter-play suggestions:** frequency and timing based, and phrased as leads to confirm in VOD.
+- **Self-scouting:** select Cloud9 to see Cloud9's own predictable habits.
+
+Limits to know about: the feeds do not record where an ability lands, so heatmaps show where the caster stood when casting. Landing locations are not modeled. VCT Americas 2025 positions are sampled once per second, so those casts are less precise (Scout warns when most of a sample comes from them). The radar images for Corrode and Summit could not be validated against telemetry, so Scout draws those on a plain grid.
+
+```bash
+# 1. Put the dataset next to this repo (see "Getting Started"), then build the scouting cache (about 4 minutes for all 857 series)
+cd backend && python -m src.scouting.ingest --all
+# 2. Start the API and the UI
+uvicorn src.main:app --port 8000        # backend
+cd ../frontend && npm run dev            # open http://localhost:3000/scout
+```
+
+The cache (`.scout-cache/`) is derived from licensed GRID data and is git-ignored. Radar alignment is validated per map by `backend/tools/calibrate_maps.py` (`pip install pillow` for that dev tool).
 
 The system ingests official GRID match telemetry and millisecond-precision 3D ability supplements, continuously models Expected Round Win (xRW) probabilities across game ticks, identifies quantifiable micro-mistakes, attributes win-probability penalties (Delta xRW) directly to individual players, and synthesizes actionable practice drills alongside a 2D interactive tactical minimap replay.
 
