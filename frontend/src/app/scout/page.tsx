@@ -6,6 +6,7 @@ import { Cloud9Logo } from "@/components/Cloud9Logo";
 import { ScoutMap } from "@/components/scout/ScoutMap";
 import { Bar, Chip, EvidenceBar, FieldLabel, Panel, titleCase } from "@/components/scout/ScoutWidgets";
 import {
+  AttackResult,
   DefenseResult,
   EMPTY_FILTERS,
   OperatorResult,
@@ -13,6 +14,7 @@ import {
   ScoutOptions,
   TeamSummary,
   UtilityResult,
+  fetchAttack,
   fetchDefense,
   fetchOperator,
   fetchOptions,
@@ -20,9 +22,10 @@ import {
   fetchUtility,
 } from "@/lib/scoutApi";
 
-type Mode = "utility" | "operator" | "defense";
+type Mode = "utility" | "operator" | "defense" | "attack";
 
 const SETUP_TIMES = [10, 15, 20];
+const ATTACK_TIMES = [20, 30, 45];
 
 const CATEGORY_HINT: Record<string, string> = {
   placeable: "Cypher traps, Killjoy bots/turrets, Vyse walls, Chamber trips, Deadlock sensors",
@@ -44,6 +47,8 @@ export default function ScoutPage() {
   const [op, setOp] = useState<OperatorResult | null>(null);
   const [def, setDef] = useState<DefenseResult | null>(null);
   const [setupAt, setSetupAt] = useState(15);
+  const [att, setAtt] = useState<AttackResult | null>(null);
+  const [attackAt, setAttackAt] = useState(45);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -76,7 +81,7 @@ export default function ScoutPage() {
     const ac = new AbortController();
     setLoading(true);
     setError(null);
-    if (mode === "defense" && !filters.maps) {
+    if ((mode === "defense" || mode === "attack") && !filters.maps) {
       setLoading(false);
       return;
     }
@@ -85,12 +90,14 @@ export default function ScoutPage() {
         ? fetchUtility(teamId, filters, ac.signal).then(setUtil)
         : mode === "operator"
           ? fetchOperator(teamId, filters, ac.signal).then(setOp)
-          : fetchDefense(teamId, filters, setupAt, ac.signal).then(setDef);
+          : mode === "attack"
+            ? fetchAttack(teamId, filters, attackAt, ac.signal).then(setAtt)
+            : fetchDefense(teamId, filters, setupAt, ac.signal).then(setDef);
     run
       .catch((e) => !ac.signal.aborted && setError(e.message))
       .finally(() => !ac.signal.aborted && setLoading(false));
     return () => ac.abort();
-  }, [teamId, options, mode, filters, setupAt]);
+  }, [teamId, options, mode, filters, setupAt, attackAt]);
 
   const set = <K extends keyof ScoutFilters>(k: K, v: ScoutFilters[K]) => setFilters((f) => ({ ...f, [k]: v }));
 
@@ -99,7 +106,9 @@ export default function ScoutPage() {
   const switchMode = (next: Mode) => {
     setMode(next);
     setFilters((f) =>
-      next === "defense"
+      next === "attack"
+        ? { ...f, maps: f.maps || options?.maps[0]?.map || "", side: "attacker", categories: [], abilities: [] }
+        : next === "defense"
         ? { ...f, maps: f.maps || options?.maps[0]?.map || "", side: "defender", categories: [], abilities: [] }
         : next === "operator"
           ? { ...f, maps: "", side: "", categories: [], abilities: [] }
@@ -118,7 +127,7 @@ export default function ScoutPage() {
         <Cloud9Logo size={44} />
         <div>
           <h1 className="text-lg font-black leading-tight text-sky-900">C9 Oracle · Scout</h1>
-          <p className="text-xs text-slate-500">VALORANT utility, Operator and defensive-setup scouting from official GRID match data</p>
+          <p className="text-xs text-slate-500">VALORANT utility, Operator, defensive-setup and attack scouting from official GRID match data</p>
         </div>
         <nav className="ml-auto flex items-center gap-2 text-sm">
           <Chip active={mode === "utility"} onClick={() => switchMode("utility")}>
@@ -129,6 +138,9 @@ export default function ScoutPage() {
           </Chip>
           <Chip active={mode === "defense"} onClick={() => switchMode("defense")}>
             Defensive setups
+          </Chip>
+          <Chip active={mode === "attack"} onClick={() => switchMode("attack")}>
+            Attack executes
           </Chip>
           <Link href="/" className="ml-3 text-xs font-semibold text-sky-700 underline underline-offset-2">
             Post-match coach
@@ -158,7 +170,7 @@ export default function ScoutPage() {
 
           <FieldLabel>Map (pick one for the heatmap)</FieldLabel>
           <div className="flex flex-wrap gap-1.5">
-            {mode !== "defense" && (
+            {mode !== "defense" && mode !== "attack" && (
               <Chip active={filters.maps === ""} onClick={() => set("maps", "")}>
                 All
               </Chip>
@@ -170,7 +182,7 @@ export default function ScoutPage() {
             ))}
           </div>
 
-          {mode !== "defense" ? (
+          {mode !== "defense" && mode !== "attack" ? (
             <>
               <FieldLabel>Side</FieldLabel>
               <div className="flex gap-1.5">
@@ -178,6 +190,18 @@ export default function ScoutPage() {
                 <Chip active={filters.side === "attacker"} onClick={() => set("side", "attacker")}>Attack</Chip>
                 <Chip active={filters.side === "defender"} onClick={() => set("side", "defender")}>Defense</Chip>
               </div>
+            </>
+          ) : mode === "attack" ? (
+            <>
+              <FieldLabel>Read the attacker spread at</FieldLabel>
+              <div className="flex gap-1.5">
+                {ATTACK_TIMES.map((t) => (
+                  <Chip key={t} active={attackAt === t} onClick={() => setAttackAt(t)}>
+                    ~{t}s
+                  </Chip>
+                ))}
+              </div>
+              <p className="mt-1 text-[11px] text-slate-500">Seconds after freezetime ends. Attacking rounds only.</p>
             </>
           ) : (
             <>
@@ -312,8 +336,43 @@ export default function ScoutPage() {
               )}
             </>
           )}
-          {mode === "defense" && !filters.maps && (
-            <Panel title="Pick one map">Defensive setups are map-specific. Choose a map on the left.</Panel>
+          {(mode === "defense" || mode === "attack") && !filters.maps && (
+            <Panel title="Pick one map">Setups and executes are map-specific. Choose a map on the left.</Panel>
+          )}
+          {mode === "attack" && att && filters.maps && (
+            <>
+              <EvidenceBar
+                confidence={att.evidence.confidence}
+                items={[
+                  { label: "attacking rounds", value: att.evidence.rounds_analyzed },
+                  { label: `rounds with a plant (${att.evidence.plant_pct}%)`, value: att.evidence.rounds_planted },
+                  { label: "matches", value: att.evidence.series },
+                  { label: "attack round win rate", value: `${att.evidence.attack_win_pct}%` },
+                ]}
+              />
+              <ScoutMap
+                map={att.map}
+                points={att.points}
+                hotspots={att.sites.map((s, i) => ({
+                  rank: i + 1,
+                  x: s.x,
+                  y: s.y,
+                  nx: s.nx,
+                  ny: s.ny,
+                  casts: s.plants,
+                  share_of_casts_pct: 0,
+                  rounds_with: 0,
+                  rounds_total: 0,
+                  rounds_with_pct: 0,
+                  median_t: 0,
+                  p25_t: 0,
+                  p75_t: 0,
+                  top_abilities: [],
+                  top_players: [],
+                }))}
+                caption="Each dot is where the spike was planted. Numbered markers are the sites (Site 1, 2, 3), found from plant positions across the dataset."
+              />
+            </>
           )}
           {mode === "defense" && def && filters.maps && (
             <>
@@ -476,6 +535,111 @@ export default function ScoutPage() {
                               {def.sites.find((x) => x.id === z.zone)?.name ?? "Mid / other"} {z.pct}%
                             </div>
                           ))}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </Panel>
+            </>
+          )}
+
+          {mode === "attack" && att && filters.maps && (
+            <>
+              <Panel title="Data-backed insights">
+                <ul className="list-disc space-y-2 pl-4 text-sm leading-snug">
+                  {att.insights.map((i) => (
+                    <li key={i}>{i}</li>
+                  ))}
+                </ul>
+              </Panel>
+              {att.counter_notes.length > 0 && (
+                <Panel title="Counter-play suggestions">
+                  <ul className="list-disc space-y-2 pl-4 text-sm leading-snug">
+                    {att.counter_notes.map((n) => (
+                      <li key={n}>{n}</li>
+                    ))}
+                  </ul>
+                </Panel>
+              )}
+              <Panel title="Where they plant">
+                <table className="w-full text-left text-xs">
+                  <thead>
+                    <tr className="text-sky-800/70">
+                      <th className="pb-1">Site</th>
+                      <th className="pb-1">Rounds</th>
+                      <th className="pb-1">Plant at</th>
+                      <th className="pb-1">Won</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {att.targets.map((t) => (
+                      <tr key={t.zone} className="border-t border-sky-100 align-top">
+                        <td className="py-1 font-semibold">
+                          {t.name}
+                          <div className="font-normal text-slate-500">
+                            ~{t.avg_utility} abilities before plant
+                            {t.top_abilities.slice(0, 2).map((a) => ` · ${titleCase(a.ability)} ${a.per_round}`)}
+                          </div>
+                        </td>
+                        <td className="tabular-nums">
+                          {t.rounds} ({t.share_pct}%)
+                        </td>
+                        <td className="tabular-nums">{t.median_plant_t}s</td>
+                        <td className="tabular-nums">{t.win_pct}%</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                <p className="mt-2 text-[11px] text-slate-500">
+                  {att.no_plant.rounds} rounds had no plant (won {att.no_plant.win_pct}%). Win rate after a plant is naturally high, so compare sites with each other, not with the team average.
+                </p>
+              </Panel>
+              <Panel title="Pace of the plant">
+                <table className="w-full text-left text-xs">
+                  <tbody>
+                    {att.pace.map((p) => (
+                      <tr key={p.pace} className="border-t border-sky-100">
+                        <td className="py-1 font-semibold">{p.label}</td>
+                        <td className="tabular-nums">
+                          {p.rounds} ({p.share_pct}%)
+                        </td>
+                        <td className="tabular-nums">{p.win_pct}% won</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </Panel>
+              <Panel title={`Attacker spread at ~${att.snapshot_seconds}s`}>
+                <table className="w-full text-left text-xs">
+                  <tbody>
+                    {att.leans.slice(0, 8).map((l) => (
+                      <tr key={l.key} className="border-t border-sky-100 align-top">
+                        <td className="py-1 font-semibold">{l.label}</td>
+                        <td className="tabular-nums">
+                          {l.rounds} ({l.share_pct}%)
+                          <div className="text-slate-500">{l.planted_on.map((x) => `${x.name} ${x.pct}%`).join(", ")}</div>
+                        </td>
+                        <td className="tabular-nums">{l.win_pct}% won</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                <p className="mt-2 text-[11px] text-slate-500">
+                  Players within 45 m of a site count toward it; the rest are uncommitted. The line under each shows where that spread went on to plant.
+                </p>
+              </Panel>
+              <Panel title="Who plants">
+                <table className="w-full text-left text-xs">
+                  <tbody>
+                    {att.planters.map((p) => (
+                      <tr key={p.id} className="border-t border-sky-100">
+                        <td className="py-1 font-semibold">
+                          {p.name}
+                          {p.main_agent ? <span className="font-normal text-slate-500"> · {titleCase(p.main_agent)}</span> : null}
+                        </td>
+                        <td className="tabular-nums">
+                          {p.plants} ({p.share_pct}%)
                         </td>
                       </tr>
                     ))}

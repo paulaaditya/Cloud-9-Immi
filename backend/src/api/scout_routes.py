@@ -2,6 +2,7 @@ from typing import List, Optional, Set
 
 from fastapi import APIRouter, HTTPException, Query
 
+from src.scouting.attack import AT_CHOICES as ATTACK_AT_CHOICES, attack_profile
 from src.scouting.aggregate import Filters, operator_query, team_options, utility_query
 from src.scouting.buys import BUY_TYPES
 from src.scouting.setups import AT_CHOICES, NeedsOneMap, defense_setups
@@ -152,5 +153,28 @@ def defense(
     f = _filters(team, maps, "defender", agents, players, None, None, patches, events, exclude_low_rate, last_n_series, buys)
     try:
         return defense_setups(f, at=float(at))
+    except NeedsOneMap as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+
+
+@router.get("/teams/{team}/attack")
+def attack(
+    team: str,
+    maps: str = Query(..., description="Exactly one map, e.g. haven"),
+    at: int = Query(45, description="Seconds after freezetime to read the attacker spread: 20, 30 or 45"),
+    agents: Optional[str] = None,
+    players: Optional[str] = None,
+    patches: Optional[str] = None,
+    events: Optional[str] = None,
+    exclude_low_rate: bool = False,
+    last_n_series: Optional[int] = Query(None, ge=1),
+    buys: Optional[str] = Query(None, description="pistol,eco,half,full (this team's buy in the round)"),
+):
+    """Attack defaults and executes: plant sites, pace, attacker spread and the utility used before the plant."""
+    if at not in ATTACK_AT_CHOICES:
+        raise HTTPException(status_code=422, detail=f"at must be one of {list(ATTACK_AT_CHOICES)}")
+    f = _filters(team, maps, "attacker", agents, players, None, None, patches, events, exclude_low_rate, last_n_series, buys)
+    try:
+        return attack_profile(f, at=float(at))
     except NeedsOneMap as exc:
         raise HTTPException(status_code=422, detail=str(exc))

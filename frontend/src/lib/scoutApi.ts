@@ -148,6 +148,41 @@ export interface DefenseResult {
   counter_notes: string[];
 }
 
+export interface AttackResult {
+  filters: Record<string, unknown>;
+  map: string;
+  bounds: unknown;
+  snapshot_seconds: number;
+  evidence: {
+    series: number;
+    rounds_analyzed: number;
+    rounds_planted: number;
+    plant_pct: number;
+    attack_win_pct: number;
+    rounds_with_lean: number;
+    confidence: "high" | "medium" | "low";
+  };
+  sites: DefenseSite[];
+  targets: {
+    zone: string;
+    name: string;
+    rounds: number;
+    share_pct: number;
+    win_pct: number;
+    median_plant_t: number;
+    paces: Record<string, number>;
+    avg_utility: number;
+    top_abilities: { ability: string; per_round: number }[];
+  }[];
+  no_plant: { rounds: number; win_pct: number };
+  pace: { pace: string; label: string; rounds: number; share_pct: number; win_pct: number }[];
+  leans: { key: string; label: string; rounds: number; share_pct: number; win_pct: number; planted_on: { zone: string; name: string; pct: number }[] }[];
+  planters: { id: string; name: string; plants: number; main_agent: string | null; share_pct: number }[];
+  points: (ScoutPoint & { zone: string })[];
+  insights: string[];
+  counter_notes: string[];
+}
+
 export interface ScoutFilters {
   maps: string;
   side: "" | "attacker" | "defender";
@@ -172,7 +207,7 @@ export const EMPTY_FILTERS: ScoutFilters = {
   lastN: "",
 };
 
-function qs(f: ScoutFilters, kind: "utility" | "operator" | "defense"): string {
+function qs(f: ScoutFilters, kind: "utility" | "operator" | "defense" | "attack"): string {
   const p = new URLSearchParams();
   if (f.maps) p.set("maps", f.maps);
   if (f.side) p.set("side", f.side);
@@ -216,3 +251,6 @@ export const fetchOperator = (teamId: string, f: ScoutFilters, signal?: AbortSig
 
 export const fetchDefense = (teamId: string, f: ScoutFilters, at: number, signal?: AbortSignal) =>
   getJson<DefenseResult>(`${API_BASE}/api/v1/scout/teams/${encodeURIComponent(teamId)}/defense?${qs(f, "defense")}&at=${at}`, signal);
+
+export const fetchAttack = (teamId: string, f: ScoutFilters, at: number, signal?: AbortSignal) =>
+  getJson<AttackResult>(`${API_BASE}/api/v1/scout/teams/${encodeURIComponent(teamId)}/attack?${qs(f, "attack")}&at=${at}`, signal);
