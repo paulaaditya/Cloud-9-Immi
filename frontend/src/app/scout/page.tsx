@@ -142,6 +142,15 @@ export default function ScoutPage() {
           <Chip active={mode === "attack"} onClick={() => switchMode("attack")}>
             Attack executes
           </Chip>
+          {teamId && filters.maps && !filters.maps.includes(",") && (
+            <Link
+              href={`/scout/card?team=${encodeURIComponent(teamId)}&map=${encodeURIComponent(filters.maps)}`}
+              className="rounded-full border border-sky-300 bg-white px-3 py-1 text-xs font-bold text-sky-800"
+              title="Printable one-page counter-card for this team and map"
+            >
+              Counter-card
+            </Link>
+          )}
           <Link href="/" className="ml-3 text-xs font-semibold text-sky-700 underline underline-offset-2">
             Post-match coach
           </Link>

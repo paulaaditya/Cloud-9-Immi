@@ -254,3 +254,17 @@ export const fetchDefense = (teamId: string, f: ScoutFilters, at: number, signal
 
 export const fetchAttack = (teamId: string, f: ScoutFilters, at: number, signal?: AbortSignal) =>
   getJson<AttackResult>(`${API_BASE}/api/v1/scout/teams/${encodeURIComponent(teamId)}/attack?${qs(f, "attack")}&at=${at}`, signal);
+
+export interface CounterCard {
+  team: string;
+  map: string;
+  sections: { title: string; evidence: string; confidence: "high" | "medium" | "low"; actions: string[]; facts: string[] }[];
+  caveats: string[];
+  sites: DefenseSite[];
+  bounds: unknown;
+  defense_points: (ScoutPoint & { zone: string })[];
+  attack_points: (ScoutPoint & { zone: string })[];
+}
+
+export const fetchCard = (teamId: string, map: string, signal?: AbortSignal) =>
+  getJson<CounterCard>(`${API_BASE}/api/v1/scout/teams/${encodeURIComponent(teamId)}/card?maps=${encodeURIComponent(map)}`, signal);

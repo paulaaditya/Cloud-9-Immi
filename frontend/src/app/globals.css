@@ -106,3 +106,16 @@ body {
   box-shadow: 0 2px 12px rgba(0, 140, 212, 0.40);
   border-color: #0077b6;
 }
+
+/* Counter-card: print or save as PDF */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  body {
+    background: #ffffff !important;
+  }
+  @page {
+    margin: 12mm;
+  }
+}

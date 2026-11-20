@@ -2,6 +2,7 @@ from typing import List, Optional, Set
 
 from fastapi import APIRouter, HTTPException, Query
 
+from src.scouting.card import build_card
 from src.scouting.attack import AT_CHOICES as ATTACK_AT_CHOICES, attack_profile
 from src.scouting.aggregate import Filters, operator_query, team_options, utility_query
 from src.scouting.buys import BUY_TYPES
@@ -176,5 +177,23 @@ def attack(
     f = _filters(team, maps, "attacker", agents, players, None, None, patches, events, exclude_low_rate, last_n_series, buys)
     try:
         return attack_profile(f, at=float(at))
+    except NeedsOneMap as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+
+
+@router.get("/teams/{team}/card")
+def counter_card(
+    team: str,
+    maps: str = Query(..., description="Exactly one map, e.g. haven"),
+    patches: Optional[str] = None,
+    events: Optional[str] = None,
+    last_n_series: Optional[int] = Query(None, ge=1),
+):
+    """Printable counter-card for one map: how to attack them, defend against them, and handle their Operator."""
+    f = _filters(team, maps, None, None, None, None, None, patches, events, False, last_n_series, None)
+    cat = load_catalog()
+    name = clean_team_name(cat.teams[f.team_ids[0]].get("name", team)) if f.team_ids and f.team_ids[0] in cat.teams else team
+    try:
+        return build_card(f, name)
     except NeedsOneMap as exc:
         raise HTTPException(status_code=422, detail=str(exc))
