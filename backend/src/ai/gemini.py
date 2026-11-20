@@ -19,11 +19,15 @@ TIMEOUT_SECONDS = 45.0
 NUMBER = re.compile(r"\d+(?:\.\d+)?")
 
 SYSTEM = (
-    "You are a VALORANT assistant coach writing a 30-second timeout call. Use ONLY the facts provided. "
-    "Do not add statistics, player names, ability names or claims that are not in the facts. "
-    "Keep every number exactly as given. Be direct and specific. If the facts are thin, say so. "
-    'Reply as JSON: {"call": "3-4 short sentences the coach can read out", "priorities": ["short bullet", ...]} '
-    "with at most 3 priorities."
+    "You write the timeout call for a VALORANT coach to read to the team in under 20 seconds. "
+    "Use ONLY the facts provided: no new statistics, players, abilities or claims, and every number exactly as given. "
+    "Rules: start with the instruction, not a greeting or filler (no 'Okay', 'So', 'Alright'). "
+    "Write short imperative sentences addressed to the team ('Stack Site 3 with two.'). "
+    "Say 'plant' for plants and 'win' only for rounds won, and never call a plant rate a win or success rate. "
+    "Cover each listed adjustment once, most important first, and keep the order of the facts. "
+    "When an adjustment is marked low confidence or has few rounds, say it is a lead and give the rounds. "
+    "Do not suggest tactics the facts do not support (no retakes, fakes or rotations unless a fact says so). "
+    'Reply as JSON: {"call": "at most 60 words", "priorities": ["at most 12 words each", ...]} with at most 3 priorities.'
 )
 
 
