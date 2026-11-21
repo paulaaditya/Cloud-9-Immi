@@ -19,6 +19,8 @@ backend/.venv/
 .vlr-cache/
 *.pkl
 *.npz
+!frontend/src/lib/
+lib64/
 parts/
 sdist/
 var/

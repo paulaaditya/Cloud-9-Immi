@@ -1,5 +1,5 @@
 import pytest
-from src.analytics.mistake_detector import AttributedMistake
+from src.analytics.vlr_mistake_detector import AttributedMistake
 import src.coaching as coaching
 from src.coaching.report_card import PlayerReportCard, build_player_report_cards
 from src.coaching.prescription import PrescribedDrill, generate_prescribed_drills
@@ -108,6 +108,60 @@ def test_builds_player_report_cards_multiple_players_ordering():
 def test_builds_player_report_cards_empty():
     cards = build_player_report_cards([])
     assert cards == []
+
+
+def test_player_report_card_includes_team_and_mistakes_list():
+    m1 = AttributedMistake(
+        mistake_type="UNTRADED_FIRST_DEATH",
+        player_id="10636",
+        player_name="OXY",
+        character_name="jett",
+        team_name="Cloud9",
+        round_number=1,
+        occurred_at="2025-01-16T22:15:10.000Z",
+        win_prob_delta=-0.31,
+        description="OXY died opening duel.",
+        coaching_fix="Buddy spacing.",
+    )
+    m2 = AttributedMistake(
+        mistake_type="ISOLATED_DUEL",
+        player_id="10636",
+        player_name="OXY",
+        character_name="jett",
+        team_name="Cloud9",
+        round_number=5,
+        occurred_at="2025-01-16T22:20:10.000Z",
+        win_prob_delta=-0.22,
+        description="OXY died isolated.",
+        coaching_fix="Anchor crossfire.",
+    )
+    cards = build_player_report_cards([m1, m2])
+    assert len(cards) == 1
+    card = cards[0]
+    assert card.team_name == "Cloud9"
+    assert len(card.mistakes) == 2
+    assert card.mistakes[0].mistake_type == "UNTRADED_FIRST_DEATH"
+    assert card.mistakes[1].mistake_type == "ISOLATED_DUEL"
+
+
+def test_player_report_card_resolves_team_from_roster():
+    m = AttributedMistake(
+        mistake_type="UNTRADED_FIRST_DEATH",
+        player_id="player_99",
+        player_name="TestPlayer",
+        round_number=2,
+        occurred_at="2025-01-16T22:15:10.000Z",
+        win_prob_delta=-0.25,
+        description="Untraded death.",
+        coaching_fix="Crossfire.",
+    )
+    roster = {"player_99": {"team_name": "Sentinels", "character_name": "cypher"}}
+    cards = build_player_report_cards([m], roster=roster)
+    assert len(cards) == 1
+    assert cards[0].team_name == "Sentinels"
+    assert cards[0].character_name == "cypher"
+    assert len(cards[0].mistakes) == 1
+
 
 
 def test_generates_prescribed_drills():

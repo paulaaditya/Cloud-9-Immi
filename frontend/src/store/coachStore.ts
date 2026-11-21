@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { AttributedMistake } from "@/types/api";
+import { AttributedMistake, RoundCoachingInsight } from "@/types/api";
 
 interface CoachStoreState {
   selectedSeriesId: string;
@@ -10,8 +10,10 @@ interface CoachStoreState {
   currentRound: number;
   totalRounds: number;
   selectedMistake: AttributedMistake | null;
+  selectedRoundInsight: RoundCoachingInsight | null;
 
   setSeriesId: (seriesId: string) => void;
+  setMatchId: (matchId: string) => void;
   setSelectedSeriesId: (seriesId: string) => void;
   setGameIndex: (index: number) => void;
   setSelectedPlayerId: (playerId: string | null) => void;
@@ -21,12 +23,13 @@ interface CoachStoreState {
   setCurrentRound: (round: number) => void;
   setTotalRounds: (total: number) => void;
   setSelectedMistake: (mistake: AttributedMistake | null) => void;
+  setSelectedRoundInsight: (insight: RoundCoachingInsight | null) => void;
   nextRound: () => void;
   prevRound: () => void;
 }
 
 export const useCoachStore = create<CoachStoreState>((set) => ({
-  selectedSeriesId: "2748743",
+  selectedSeriesId: "vlr-c9-sen-2026",
   currentGameIndex: 0,
   selectedPlayerId: null,
   selectedMistakeId: null,
@@ -34,6 +37,7 @@ export const useCoachStore = create<CoachStoreState>((set) => ({
   currentRound: 1,
   totalRounds: 24,
   selectedMistake: null,
+  selectedRoundInsight: null,
 
   setSeriesId: (seriesId: string) =>
     set({
@@ -43,6 +47,17 @@ export const useCoachStore = create<CoachStoreState>((set) => ({
       selectedPlayerId: null,
       selectedMistakeId: null,
       selectedMistake: null,
+      selectedRoundInsight: null,
+    }),
+  setMatchId: (matchId: string) =>
+    set({
+      selectedSeriesId: matchId,
+      currentGameIndex: 0,
+      currentRound: 1,
+      selectedPlayerId: null,
+      selectedMistakeId: null,
+      selectedMistake: null,
+      selectedRoundInsight: null,
     }),
   setSelectedSeriesId: (seriesId: string) => set({ selectedSeriesId: seriesId }),
   setGameIndex: (index: number) =>
@@ -70,6 +85,8 @@ export const useCoachStore = create<CoachStoreState>((set) => ({
       selectedMistake: mistake,
       selectedMistakeId: mistake ? `${mistake.player_id}-${mistake.occurred_at}` : null,
     }),
+  setSelectedRoundInsight: (insight: RoundCoachingInsight | null) =>
+    set({ selectedRoundInsight: insight }),
   nextRound: () =>
     set((state) => ({
       currentRound: Math.min(state.currentRound + 1, state.totalRounds),

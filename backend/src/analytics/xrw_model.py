@@ -44,3 +44,23 @@ class ExpectedRoundWinModel:
         # Sigmoid activation
         prob = 1.0 / (1.0 + np.exp(-logit))
         return float(np.clip(prob, 0.01, 0.99))
+
+
+def calculate_xrw(
+    alive_friendly: int,
+    alive_enemy: int,
+    loadout_diff: float = 0.0,
+    spike_planted: bool = False,
+    round_time_remaining: float = 100.0,
+) -> float:
+    """Calculate expected round win probability given round parameters."""
+    model = ExpectedRoundWinModel()
+    state = RoundStateVector(
+        alive_friendly=alive_friendly,
+        alive_enemy=alive_enemy,
+        loadout_diff=loadout_diff,
+        spike_planted=spike_planted,
+        seconds_remaining=round_time_remaining,
+    )
+    return model.predict_probability(state)
+

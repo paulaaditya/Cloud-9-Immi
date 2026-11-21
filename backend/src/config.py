@@ -28,6 +28,10 @@ class Settings(BaseSettings):
 
     STL_DATA_DIR: Optional[str] = None
 
+    # VLR API configuration (used by the VLR-based post-match coach)
+    VLR_API_BASE_URL: str = "https://vlrggapi.vercel.app"
+    VLR_CACHE_TTL: int = 300
+
     # Optional AI wording layer for the timeout advisor. Leave empty to run fully offline.
     GEMINI_API_KEY: Optional[str] = None
     GEMINI_MODEL: str = "gemini-2.5-pro"

@@ -35,8 +35,7 @@ export function DrillPrescriptions({
     <div className="flex flex-col h-full">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-3 pb-2 border-b border-sky-200/60">
         <div>
-          <h2 className="text-sm font-bold tracking-tight text-slate-900 flex items-center gap-2 uppercase">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]"></span>
+          <h2 className="text-sm font-bold tracking-tight text-slate-900 uppercase">
             Prescribed Tactical Training Drills
           </h2>
           <p className="text-[11px] text-slate-500 mt-0.5">
@@ -67,19 +66,29 @@ export function DrillPrescriptions({
                 ? drill.target_player_names
                 : drill.target_players;
 
+            const isDrillHighlighted =
+              (selectedPlayerId &&
+                (drill.target_players.includes(selectedPlayerId) ||
+                  drill.target_player_names?.includes(selectedPlayerId))) ||
+              idx === 0;
+
             return (
               <div
                 key={`${drill.drill_name}-${idx}`}
                 data-testid={`drill-card-${idx}`}
-                className="bg-white/85 border border-sky-200/80 rounded-lg p-3.5 flex flex-col justify-between hover:border-[#008cd4]/50 shadow-sm transition-all text-xs"
+                className={`rounded-lg p-3.5 flex flex-col justify-start gap-2.5 transition-all text-xs border ${
+                  isDrillHighlighted
+                    ? "c9-watercolor-card border-sky-300/80 shadow-xs"
+                    : "bg-white/90 border-sky-200/70 hover:border-[#008cd4]/50 shadow-2xs"
+                }`}
               >
                 <div>
                   <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
-                    <span className="text-[10px] font-bold tracking-wider uppercase text-emerald-800 bg-emerald-100 border border-emerald-300 px-2 py-0.5 rounded shadow-xs">
-                      Protocol #{idx + 1}
-                    </span>
+                    <h3 className="text-sm font-bold text-slate-900 tracking-tight">
+                      {drill.drill_name}
+                    </h3>
                     <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className="text-[10px] text-slate-500 font-semibold">Target Roster:</span>
+                      <span className="text-[10px] text-slate-400 font-medium">Target:</span>
                       {playerLabels.map((player, pIdx) => {
                         const rawId = drill.target_players[pIdx] || player;
                         const isTargetSelected =
@@ -90,8 +99,8 @@ export function DrillPrescriptions({
                             key={`${player}-${pIdx}`}
                             className={`text-[10px] font-mono font-medium px-2 py-0.5 rounded transition-all ${
                               isTargetSelected
-                                ? "bg-[#008cd4] text-white font-bold border border-[#008cd4] shadow-[0_0_10px_rgba(0,140,212,0.35)]"
-                                : "bg-sky-50 text-sky-800 border border-sky-200 hover:border-sky-400 font-semibold"
+                                ? "bg-[#008cd4] text-white font-bold shadow-xs"
+                                : "bg-sky-50 text-sky-800 hover:bg-sky-100"
                             }`}
                           >
                             {player}
@@ -101,21 +110,16 @@ export function DrillPrescriptions({
                     </div>
                   </div>
 
-                  <h3 className="text-sm font-bold text-slate-900 mb-1.5 tracking-tight">
-                    {drill.drill_name}
-                  </h3>
-
-                  <p className="text-[11px] text-slate-700 leading-relaxed mb-2.5 bg-sky-50/80 border-l-2 border-[#008cd4] border-r border-t border-b border-sky-200/70 p-2.5 rounded-r shadow-xs">
-                    <span className="font-bold text-[#0066a1] block mb-0.5 flex items-center gap-1">
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#008cd4]"></span>
-                      Tactical Objective:
+                  <div className="text-[11px] text-slate-700 leading-relaxed mb-2.5 bg-sky-50/60 border-l-2 border-[#008cd4] p-2.5 rounded-r-md">
+                    <span className="font-semibold text-[#0077b6] block mb-0.5 text-[10px] uppercase tracking-wider">
+                      Tactical Objective
                     </span>
-                    {drill.drill_objective}
-                  </p>
+                    <p className="text-slate-700">{drill.drill_objective}</p>
+                  </div>
 
                   <div className="mb-2.5">
-                    <h4 className="text-[10px] font-bold text-sky-900 uppercase tracking-wider mb-1">
-                      Setup & Execution Steps
+                    <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+                      Setup Steps
                     </h4>
                     <ol className="list-decimal list-inside space-y-1 text-[11px] text-slate-600">
                       {drill.setup_steps.map((step, sIdx) => (
@@ -127,9 +131,8 @@ export function DrillPrescriptions({
                   </div>
                 </div>
 
-                <div className="bg-emerald-50/90 border border-emerald-200 rounded-lg p-2.5 text-[11px] shadow-xs">
-                  <span className="font-bold text-emerald-800 uppercase tracking-wider text-[9px] block mb-0.5 flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                <div className="bg-emerald-50/60 border-l-2 border-emerald-500 rounded-r-md p-2.5 text-[11px]">
+                  <span className="font-bold text-emerald-800 text-[10px] uppercase tracking-wider block mb-0.5">
                     Success Metric
                   </span>
                   <p className="text-emerald-950 font-medium leading-relaxed">
