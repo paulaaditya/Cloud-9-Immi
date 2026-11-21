@@ -166,7 +166,7 @@ export default function ScoutPage() {
             </Link>
           )}
           <Link href="/coach" className="ml-3 text-xs font-semibold text-sky-700 underline underline-offset-2">
-            Post-match coach
+            Post-match coach (demo data)
           </Link>
         </nav>
       </header>

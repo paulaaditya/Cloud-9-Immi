@@ -69,7 +69,7 @@ export default function Home() {
           <Link href="/scout" className="hover:underline">Scout</Link>
           <Link href="/scout/timeout" className="hover:underline">Timeout advisor</Link>
           <Link href="/scout/replay" className="hover:underline">2D replay</Link>
-          <Link href="/coach" className="hover:underline">Post-match coach</Link>
+          <Link href="/coach" className="hover:underline">Post-match coach (demo data)</Link>
         </nav>
       </header>
 

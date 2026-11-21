@@ -3,7 +3,7 @@
 C9 Oracle is a scouting tool built for the Cloud9 x JetBrains "Sky's the Limit" 2026 Hackathon, Category 1 (VAL/GC): Tactical Scouting, Utility Placement & Operator Profiler. It reads the official GRID match feeds and turns an opponent's habits into a one-page counter-card a coach can print. It has two parts:
 
 - **Scout** (`/scout`, with a landing page at `/`): the scouting engine described below, with the sample size shown on every result.
-- **Post-match coach** (`/coach`): the original xRW win-probability and micro-mistake analysis, usable for self-scouting. It is described in the second half of this file.
+- **Post-match coach** (`/coach`, demo data): a coaching dashboard with a round timeline, per-player report cards, win-probability (xRW) tracking, drills and an optional local small-model coach, added by the team on `main`. **Its matches, rosters, stats and round events are generated for demonstration (`backend/src/data/vlr_2026_season.py`) and are not real match telemetry.** The page says so. Scout is the part built on real GRID data.
 
 ### Scout: what it answers
 
@@ -24,6 +24,14 @@ The timeout advisor compares how an opponent plays in the current score situatio
 Common to every tab: filters (team, map, side, agent, player, patch, buy type, recent matches, and an option to exclude the low-precision VCT Americas 2025 feeds), the rounds and matches behind each number, and a high/medium/low confidence badge. Counter-play lines are frequency based and phrased as leads to confirm in VOD. The approach is described in [docs/METHODOLOGY.md](docs/METHODOLOGY.md).
 
 **About the 2D replay.** Positions come from the game events that carry them (ability casts, damage, kills, item pickups). That is dense in fights, about 27 position frames per round on a sample game with a median gap of 1.2 s, and sparse in quiet stretches, so the viewer interpolates between frames and says so. How a round ended (elimination, detonation, defuse, time) is inferred from the plant, the winner and who died, because the feed's own reason is not kept. The first time a match is opened it is read from the data files (a few seconds) and cached in `.scout-cache/` (git-ignored).
+
+**Where the data comes from**
+
+| Part | Data | Real? |
+|---|---|---|
+| Scout, 2D replay, Timeout advisor, Counter-card | Official GRID match feeds (857 series) | Yes |
+| Post-match coach (`/coach`) | Generated demonstration matches | No, clearly labelled |
+| VLR map context (`/scout/teams/{team}/vlr`) | Self-hosted vlrggapi (unofficial scraper) | Yes, not shown in the UI yet |
 
 **Limits to know about**
 - The feeds do not record where an ability lands, so heatmaps show where the caster stood. Landing locations are not modeled.
@@ -46,9 +54,9 @@ The cache (`.scout-cache/`) and the VLR cache (`.vlr-cache/`) are git-ignored. T
 
 ---
 
-## Post-match coach (original module)
+## Post-match coach (demo data)
 
-The system ingests official GRID match telemetry and millisecond-precision 3D ability supplements, continuously models Expected Round Win (xRW) probabilities across game ticks, identifies quantifiable micro-mistakes, attributes win-probability penalties (Delta xRW) directly to individual players, and synthesizes actionable practice drills alongside a 2D interactive tactical minimap replay.
+The coach scores rounds with an Expected Round Win (xRW) model, flags micro-mistakes such as untraded first deaths, attributes the win-probability change (Delta xRW) to players, and prescribes drills. It runs on generated demonstration matches, so treat its numbers as a demo of the interface and method, not as findings about real teams. Its data layer (`backend/src/data/vlr_client.py`) can also read live matches from a vlrggapi instance. An optional local small model (Ollama or llama.cpp, with a deterministic fallback) writes the round insights.
 
 ---
 
@@ -84,6 +92,8 @@ C9 Oracle bridges this gap by calculating the exact Expected Round Win penalty (
 ---
 
 ## Architecture and Technical Methodology
+
+> The ingestion sections below (streaming and the supplement join) describe how **Scout** reads the real GRID data. The xRW model, mistake detection and report cards run in the demo-data coach.
 
 ### In-Memory Zstandard Streaming
 
@@ -254,7 +264,7 @@ cd backend
 .venv\Scripts\python -m pytest -q
 ```
 
-At the time of writing: 86 passed.
+At the time of writing: 133 passed (some tests need the GRID dataset or the optional `respx` package, which is in `requirements.txt`).
 
 ### End-to-End Pipeline Test
 
@@ -272,7 +282,7 @@ cd frontend
 npm run test
 ```
 
-At the time of writing: 5 test suites, 28 tests passed. `npx tsc --noEmit` is clean.
+At the time of writing: 13 test suites, 95 tests passed. `npx tsc --noEmit` is clean.
 
 ---
 

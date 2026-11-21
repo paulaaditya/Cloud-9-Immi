@@ -64,6 +64,8 @@ python -m pytest -q                     # tests that need the dataset skip thems
 
 ## 9. Outside data
 
+The post-match coach on `main` uses generated demonstration data (`vlr_2026_season.py`), not real telemetry, and is labelled as such in the app. Nothing in sections 1 to 8 uses it.
+
 Gemini is used only as an optional wording layer (section 5) and is off without a key. Check the hackathon's rules on outside AI services before using it in a submission.
 
 VLR.gg map win rates and rosters are available through a self-hosted [vlrggapi](https://github.com/axsddlr/vlrggapi) client (`backend/src/vlr/client.py`). vlrggapi is an unofficial scraper. Before this is used in a submission, check vlr.gg's terms and the hackathon's rules on outside data.

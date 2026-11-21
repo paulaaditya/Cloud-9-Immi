@@ -578,6 +578,18 @@ export default function CoachDashboardPage() {
           </div>
         </div>
       </header>
+      <div
+        data-testid="demo-data-banner"
+        role="note"
+        className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-amber-300 bg-amber-50 px-6 py-2 text-xs text-amber-900"
+      >
+        <strong className="font-bold">Demo data.</strong>
+        <span>
+          The matches, rosters, stats and round events on this page are generated for demonstration. They are not real match telemetry. Real GRID data powers Scout.
+        </span>
+        <a href="/scout" className="font-bold underline underline-offset-2">Open Scout</a>
+        <a href="/" className="font-bold underline underline-offset-2">Home</a>
+      </div>
 
       {/* Main Content Area */}
       {isLoading && !data ? (
