@@ -1,8 +1,62 @@
-# C9 Oracle: VALORANT Assistant Coach and Micro-Mistake Attribution
+# C9 Oracle: VALORANT Anti-Strat Scouting Engine
 
-C9 Oracle is an automated coaching and performance analytics platform engineered for the Cloud9 x JetBrains "Sky's the Limit" 2026 Hackathon (Category 1: Comprehensive Assistant Coach).
+C9 Oracle is a scouting tool built for the Cloud9 x JetBrains "Sky's the Limit" 2026 Hackathon, Category 1 (VAL/GC): Tactical Scouting, Utility Placement & Operator Profiler. It reads the official GRID match feeds and turns an opponent's habits into a one-page counter-card a coach can print. It has two parts:
 
-The system ingests official GRID match telemetry and millisecond-precision 3D ability supplements, continuously models Expected Round Win (xRW) probabilities across game ticks, identifies quantifiable micro-mistakes, attributes win-probability penalties (Delta xRW) directly to individual players, and synthesizes actionable practice drills alongside a 2D interactive tactical minimap replay.
+- **Scout** (`/scout`, with a landing page at `/`): the scouting engine described below, with the sample size shown on every result.
+- **Post-match coach** (`/coach`, demo data): a coaching dashboard with a round timeline, per-player report cards, win-probability (xRW) tracking, drills and an optional local small-model coach, added by the team on `main`. **Its matches, rosters, stats and round events are generated for demonstration (`backend/src/data/vlr_2026_season.py`) and are not real match telemetry.** The page says so. Scout is the part built on real GRID data.
+
+### Scout: what it answers
+
+Scout reads the GRID feeds and ability supplements for all 857 VALORANT series (1.4 million casts) and answers coach-style questions with the evidence behind them. Every tab can be run on Cloud9 itself (self-scouting) or on any opponent in the dataset.
+
+| Tab | Question | Example from Cloud9's own data |
+|---|---|---|
+| **Utility placement** | Where does a team cast placeable utility, recon, smokes, stall and flashes? | Heatmap with numbered hotspots; each reports "50 of 81 rounds" and typical round timing. |
+| **Operator profiler** | Who holds the Operator, when, and on what buy? | Cloud9 held one in 102 of 962 rounds (10.6%). OXY on Jett holds 97 of them, 93 on defense. Operators appear only on full buys (100 of 102 rounds). |
+| **Defensive setups** | How do they spread their defenders across the sites early in a round? | On Lotus, with 0-1 defenders on Site 1 at about 15 s they won 50% of rounds (70) against 68% with 2+ (28). |
+| **Attack executes** | Where do they plant, how fast, and with what utility? | On Lotus, Site 3 is 35.5% of rounds and Site 2 is their weaker hit (44% won over 25 rounds, against 76% on Site 3). |
+| **Timeout advisor** (`/scout/timeout`) | What should we change before the next rounds? | Enter their map, side, run (for example lost the last two) and recent plants. On Lotus, attacking after a two-round losing run, it expects Site 3 (36.6% of plants, 15 rounds) and flags "3 of the last 4 on Site 3" against 35.5% normally. |
+| **2D replay** (`/scout/replay`) | What actually happened in that round? | Pick any match and map, then step through rounds on the map: player positions over time, kills with lines, the plant, a clickable kill feed and the economy table. Every Scout number can be checked against the rounds behind it. |
+| **Counter-card** (`/scout/card`) | What do we do about them on this map? | One printable page: how to attack them, how to defend against them, and what to do about their Operator. Save it as a PDF from the print dialog. |
+
+The timeout advisor compares how an opponent plays in the current score situation (after losing or winning two or more rounds) with their baseline, and returns up to three adjustments with the rounds behind each. The feed does not say which team called a timeout, so it uses the score situation rather than timeout history. An optional Gemini layer can word the advice as a short timeout call (see below).
+
+Common to every tab: filters (team, map, side, agent, player, patch, buy type, recent matches, and an option to exclude the low-precision VCT Americas 2025 feeds), the rounds and matches behind each number, and a high/medium/low confidence badge. Counter-play lines are frequency based and phrased as leads to confirm in VOD. The approach is described in [docs/METHODOLOGY.md](docs/METHODOLOGY.md).
+
+**About the 2D replay.** Positions come from the game events that carry them (ability casts, damage, kills, item pickups). That is dense in fights, about 27 position frames per round on a sample game with a median gap of 1.2 s, and sparse in quiet stretches, so the viewer interpolates between frames and says so. How a round ended (elimination, detonation, defuse, time) is inferred from the plant, the winner and who died, because the feed's own reason is not kept. The first time a match is opened it is read from the data files (a few seconds) and cached in `.scout-cache/` (git-ignored).
+
+**Where the data comes from**
+
+| Part | Data | Real? |
+|---|---|---|
+| Scout, 2D replay, Timeout advisor, Counter-card | Official GRID match feeds (857 series) | Yes |
+| Post-match coach (`/coach`) | Generated demonstration matches | No, clearly labelled |
+| VLR map context (`/scout/teams/{team}/vlr`) | Self-hosted vlrggapi (unofficial scraper) | Yes, not shown in the UI yet |
+
+**Limits to know about**
+- The feeds do not record where an ability lands, so heatmaps show where the caster stood. Landing locations are not modeled.
+- VCT Americas 2025 positions are sampled once per second, so those casts are less precise. Scout warns when most of a sample comes from them.
+- The feeds carry no site labels. Sites are found by clustering where attackers plant the spike and are named Site 1, 2, 3 from left to right on the map. They are not matched to Valorant's site letters.
+- The radar images for Corrode and Summit could not be validated against telemetry, so Scout draws those on a plain grid. Summit has too few plants for reliable sites.
+- Win rates are descriptive, not causal, and small cells are noise. The page states the rounds behind each figure.
+- The timeout advisor is only as strong as its slices: a situation with fewer than 10 usable rounds falls back to the overall picture, and the page says so.
+- VLR.gg map win rates and rosters (via a self-hosted vlrggapi) are fetched by the backend (`/api/v1/scout/teams/{team}/vlr`) but are not shown in the UI yet.
+
+```bash
+# 1. Put the dataset next to this repo (see "Getting Started"), then build the scouting cache (about 4 minutes for all 857 series)
+cd backend && python -m src.scouting.ingest --all
+# 2. Start the API and the UI
+uvicorn src.main:app --port 8000        # backend
+cd ../frontend && npm run dev            # open http://localhost:3000/scout
+```
+
+The cache (`.scout-cache/`) and the VLR cache (`.vlr-cache/`) are git-ignored. The scouting cache is derived from licensed GRID data. Radar alignment is validated per map by `backend/tools/calibrate_maps.py` (`pip install pillow` for that dev tool).
+
+---
+
+## Post-match coach (demo data)
+
+The coach scores rounds with an Expected Round Win (xRW) model, flags micro-mistakes such as untraded first deaths, attributes the win-probability change (Delta xRW) to players, and prescribes drills. It runs on generated demonstration matches, so treat its numbers as a demo of the interface and method, not as findings about real teams. Its data layer (`backend/src/data/vlr_client.py`) can also read live matches from a vlrggapi instance. An optional local small model (Ollama or llama.cpp, with a deterministic fallback) writes the round insights.
 
 ---
 
@@ -15,7 +69,7 @@ The system ingests official GRID match telemetry and millisecond-precision 3D ab
   - [Expected Round Win (xRW) Analytical Engine](#expected-round-win-xrw-analytical-engine)
   - [Micro-Mistake Detection and Attribution Engine](#micro-mistake-detection-and-attribution-engine)
   - [Prescriptive Drill and Player Report Card Generation](#prescriptive-drill-and-player-report-card-generation)
-- [JetBrains IDE and AI Assistant Workflow](#jetbrains-ide-and-ai-assistant-workflow)
+- [Tools and AI Workflow](#tools-and-ai-workflow)
 - [Project Structure](#project-structure)
 - [Getting Started](#getting-started)
   - [Prerequisites](#prerequisites)
@@ -38,6 +92,8 @@ C9 Oracle bridges this gap by calculating the exact Expected Round Win penalty (
 ---
 
 ## Architecture and Technical Methodology
+
+> The ingestion sections below (streaming and the supplement join) describe how **Scout** reads the real GRID data. The xRW model, mistake detection and report cards run in the demo-data coach.
 
 ### In-Memory Zstandard Streaming
 
@@ -93,17 +149,13 @@ The coaching engine automatically maps vulnerabilities to structured drills from
 
 ---
 
-## JetBrains IDE and AI Assistant Workflow
+## Tools and AI Workflow
 
-The C9 Oracle platform was engineered using JetBrains developer tools:
+The Scout engine (extractor, buy types, site detection, setups, attack profile, counter-card, VLR client) and its tests were built with Claude Code driving the work from a written plan (`docs/plans/`, `docs/HACKATHON_VALORANT_IDEAS.md`). Every claim in this README was checked against a run of the code before it was written down.
 
-- **JetBrains PyCharm Professional:** Used for backend development, type annotations with strict MyPy validation, Pydantic v2 schemas, in-memory zstandard stream profiling, and the Pytest test harness.
-- **JetBrains WebStorm:** Used for frontend development, Next.js 15 App Router architecture, TypeScript 5 typings, HTML5 Canvas 2D tactical minimap rendering, and Jest unit tests.
-- **JetBrains AI Assistant:**
-  - Formulated and vectorized the sigmoid mathematical weights for the Expected Round Win engine.
-  - Accelerated development of the 3D vector math module (Euclidean distances and forward cone checks).
-  - Drafted comprehensive unit tests for parser rollback edge cases, zstandard streaming readers, and mistake attribution filters.
-  - Refactored frontend Canvas rendering routines to ensure crisp coordinate transformations across different VALORANT map bounding boxes.
+**Gemini (optional, runtime).** The timeout advisor can ask Gemini to word its advice as a short timeout call. It is off unless `GEMINI_API_KEY` is set in a git-ignored `.env` (`GEMINI_MODEL` picks the model). Gemini receives only the advisor's aggregated lines, never raw match data, is told to use nothing else, and its answer is discarded if it contains a number that is not in those lines. Nothing is trained or fine-tuned. If the call fails or is rejected, the page shows the plain advice. Check the hackathon's rules on outside AI services before enabling it in a submission.
+
+JetBrains tools: TODO(author): list the JetBrains IDEs and the JetBrains AI Assistant features you actually used, and for what. The earlier version of this section named PyCharm Professional, WebStorm, strict MyPy and AI Assistant tasks. MyPy is not configured in this repository, and the rest could not be verified from the code, so it was removed rather than left in.
 
 ---
 
@@ -119,10 +171,12 @@ c9-oracle/
 │   │   ├── main.py                  # FastAPI application entrypoint
 │   │   ├── api/                     # REST routes and dependency injection
 │   │   ├── data/                    # In-memory zstd streamer, parser, supplement joiner
+│   │   ├── scouting/                # Scout: extractor, buy types, sites, setups, attack, card, aggregates
+│   │   ├── vlr/                     # vlrggapi client with disk cache
 │   │   ├── models/                  # Pydantic domain models (events, match state, analytics)
 │   │   ├── analytics/               # Expected Round Win (xRW) model and mistake detector
 │   │   └── coaching/                # Report card aggregator and drill prescription
-│   └── tests/                       # Unit and end-to-end integration tests (26 passing tests)
+│   └── tests/                       # Unit and end-to-end integration tests
 ├── frontend/
 │   ├── Dockerfile
 │   ├── package.json
@@ -130,7 +184,7 @@ c9-oracle/
 │   ├── next.config.ts
 │   ├── tailwind.config.ts
 │   └── src/
-│       ├── app/                     # Next.js App Router (coaching dashboard)
+│       ├── app/                     # Next.js App Router (coach dashboard, /scout, /scout/card)
 │       ├── components/              # MinimapReplay, PlayerReportCards, DrillPrescriptions
 │       ├── store/                   # Zustand state management
 │       └── types/                   # TypeScript interfaces matching backend models
@@ -142,6 +196,8 @@ c9-oracle/
 ---
 
 ## Getting Started
+
+Run the backend and the frontend, then open `http://localhost:3000` (home page), `/scout`, `/scout/timeout`, `/scout/replay` or `/coach`.
 
 ### Prerequisites
 
@@ -201,44 +257,14 @@ The official match telemetry directory is mounted read-only into `/data` within 
 
 ### Backend Test Suite
 
-The backend includes 26 automated unit and end-to-end tests covering data streaming, state parsing, rollback resilience, probability modeling, mistake detection, coaching synthesis, and API endpoints.
+The backend tests cover data streaming, state parsing, rollback resilience, probability modeling, mistake detection, coaching synthesis, the scouting engine (buy types, sites, setups, attack, counter-card), the VLR client and the API endpoints. Tests that need the GRID dataset skip themselves if it is not present.
 
 ```bash
 cd backend
-.venv\Scripts\python -m pytest -v
+.venv\Scripts\python -m pytest -q
 ```
 
-Expected output:
-```
-tests/test_api.py::test_health_check PASSED
-tests/test_api.py::test_get_coaching_report_real_series PASSED
-tests/test_api.py::test_get_coaching_report_not_found PASSED
-tests/test_coaching.py::test_package_exports PASSED
-tests/test_coaching.py::test_builds_player_report_cards PASSED
-tests/test_coaching.py::test_builds_player_report_cards_multiple_players_ordering PASSED
-tests/test_coaching.py::test_builds_player_report_cards_empty PASSED
-tests/test_coaching.py::test_generates_prescribed_drills PASSED
-tests/test_coaching.py::test_generates_prescribed_drills_multiple_types PASSED
-tests/test_coaching.py::test_generates_prescribed_drills_empty PASSED
-tests/test_config.py::test_settings_resolves_data_dir PASSED
-tests/test_config.py::test_settings_custom_env_override PASSED
-tests/test_e2e.py::test_full_pipeline_on_vct_series PASSED
-tests/test_mistake_detector.py::test_detects_untraded_first_death PASSED
-tests/test_mistake_detector.py::test_traded_kill_does_not_flag_untraded PASSED
-tests/test_mistake_detector.py::test_spatial_math_distance PASSED
-tests/test_parser.py::test_parse_series_extracts_structure PASSED
-tests/test_parser.py::test_parse_series_game_rollback PASSED
-tests/test_streamer.py::test_stream_series_events_reads_first_envelopes PASSED
-tests/test_streamer.py::test_stream_series_events_invalid_id_raises PASSED
-tests/test_streamer.py::test_stream_series_events_zero_max_envelopes PASSED
-tests/test_streamer.py::test_load_ability_supplement_structure PASSED
-tests/test_xrw_model.py::test_xrw_even_state PASSED
-tests/test_xrw_model.py::test_xrw_man_advantage_impact PASSED
-tests/test_xrw_model.py::test_xrw_spike_plant_impact PASSED
-tests/test_xrw_model.py::test_xrw_boundary_conditions PASSED
-
-======================== 26 passed in 1.52s ========================
-```
+At the time of writing: 133 passed (some tests need the GRID dataset or the optional `respx` package, which is in `requirements.txt`).
 
 ### End-to-End Pipeline Test
 
@@ -256,7 +282,7 @@ cd frontend
 npm run test
 ```
 
-Expected output: 3 test suites passed, 12 component tests passed.
+At the time of writing: 13 test suites, 95 tests passed. `npx tsc --noEmit` is clean.
 
 ---
 
@@ -268,3 +294,4 @@ The match telemetry files (`val/`), 3D ability spatial supplements (`val-ability
 - No raw `.zst`, decompressed `.jsonl`, derived `.parquet`, `.sqlite`, or `.duckdb` data files are committed to this repository.
 - All telemetry is accessed strictly at runtime through the external directory referenced by the `STL_DATA_DIR` environment variable.
 - The `.gitignore` configuration rigorously prevents accidental staging of proprietary match assets.
+- The derived scouting cache (`.scout-cache/`) and the VLR response cache (`.vlr-cache/`) are git-ignored.

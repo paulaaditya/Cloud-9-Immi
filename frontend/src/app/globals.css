@@ -107,6 +107,22 @@ body {
   border-color: #0077b6;
 }
 
+/* Counter-card: print or save as PDF */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  html,
+  body {
+    background: #ffffff !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+  @page {
+    margin: 12mm;
+  }
+}
+
 /* Watercolor Gradient Accents - Soft translucent sky blue, cyan, ethereal lavender and mint */
 .c9-watercolor-card {
   background: linear-gradient(135deg, #e0f2fe 0%, #dbeafe 25%, #ede9fe 55%, #e0f7fa 80%, #f0fdf4 100%) !important;

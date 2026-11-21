@@ -12,6 +12,13 @@ downloads/
 eggs/
 .eggs/
 /lib/
+/lib64/
+backend/.venv/
+# Derived scouting caches built from licensed GRID data: never commit
+.scout-cache/
+.vlr-cache/
+*.pkl
+*.npz
 !frontend/src/lib/
 lib64/
 parts/

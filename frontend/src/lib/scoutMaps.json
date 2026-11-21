@@ -1,0 +1,275 @@
+{
+  "abyss": {
+    "swap": true,
+    "flipX": false,
+    "flipY": true,
+    "framing": "box",
+    "box": [
+      0.0302734375,
+      0.0146484375,
+      0.9697265625,
+      0.9853515625
+    ],
+    "score": 0.7906,
+    "points": 50002,
+    "bounds": {
+      "minX": -6000.0,
+      "maxX": 6000.0,
+      "minY": -6800.0,
+      "maxY": 5800.0
+    },
+    "image": "/maps/abyss.png"
+  },
+  "ascent": {
+    "swap": false,
+    "flipX": false,
+    "flipY": false,
+    "framing": "box",
+    "box": [
+      0.034,
+      0.025,
+      0.965,
+      0.99
+    ],
+    "score": 0.9659,
+    "points": 150203,
+    "bounds": {
+      "minX": -4850.0,
+      "maxX": 7550.0,
+      "minY": -11100.0,
+      "maxY": 2200.0
+    },
+    "image": "/maps/ascent.png"
+  },
+  "bind": {
+    "swap": true,
+    "flipX": false,
+    "flipY": true,
+    "framing": "box",
+    "box": [
+      0.029,
+      0.007,
+      0.967,
+      0.986
+    ],
+    "score": 0.8827,
+    "points": 102859,
+    "bounds": {
+      "minX": 100.0,
+      "maxX": 16100.0,
+      "minY": -7300.0,
+      "maxY": 6050.0
+    },
+    "image": "/maps/bind.png"
+  },
+  "breeze": {
+    "swap": true,
+    "flipX": false,
+    "flipY": true,
+    "framing": "box",
+    "box": [
+      0.011,
+      0.001,
+      0.999,
+      0.999
+    ],
+    "score": 0.9744,
+    "points": 60737,
+    "bounds": {
+      "minX": -1650.0,
+      "maxX": 11450.0,
+      "minY": -6200.0,
+      "maxY": 7200.0
+    },
+    "image": "/maps/breeze.png"
+  },
+  "corrode": {
+    "swap": false,
+    "flipX": false,
+    "flipY": false,
+    "framing": "box",
+    "box": [
+      0.14,
+      0.09,
+      0.881,
+      0.911
+    ],
+    "score": 0.4753,
+    "points": 69479,
+    "bounds": {
+      "minX": -6000.0,
+      "maxX": 6000.0,
+      "minY": -7100.0,
+      "maxY": 6500.0
+    },
+    "image": "/maps/corrode.png"
+  },
+  "fracture": {
+    "swap": true,
+    "flipX": false,
+    "flipY": true,
+    "framing": "box",
+    "box": [
+      0.019,
+      0.04,
+      0.988,
+      0.962
+    ],
+    "score": 0.9796,
+    "points": 72689,
+    "bounds": {
+      "minX": 3000.0,
+      "maxX": 13900.0,
+      "minY": -6850.0,
+      "maxY": 4700.0
+    },
+    "image": "/maps/fracture.png"
+  },
+  "haven": {
+    "swap": false,
+    "flipX": false,
+    "flipY": false,
+    "framing": "box",
+    "box": [
+      0.057,
+      0.007,
+      0.943,
+      0.991
+    ],
+    "score": 0.9723,
+    "points": 339932,
+    "bounds": {
+      "minX": -3700.0,
+      "maxX": 7450.0,
+      "minY": -14100.0,
+      "maxY": -1800.0
+    },
+    "image": "/maps/haven.png"
+  },
+  "icebox": {
+    "swap": false,
+    "flipX": true,
+    "flipY": true,
+    "framing": "box",
+    "box": [
+      0.063,
+      0.009,
+      0.907,
+      0.994
+    ],
+    "score": 0.9359,
+    "points": 85045,
+    "bounds": {
+      "minX": -8300.0,
+      "maxX": 3100.0,
+      "minY": -5200.0,
+      "maxY": 7200.0
+    },
+    "image": "/maps/icebox.png"
+  },
+  "lotus": {
+    "swap": true,
+    "flipX": false,
+    "flipY": true,
+    "framing": "box",
+    "box": [
+      0.0546875,
+      0.1181640625,
+      0.9306640625,
+      0.896484375
+    ],
+    "score": 0.997,
+    "points": 278379,
+    "bounds": {
+      "minX": 300.0,
+      "maxX": 11000.0,
+      "minY": -5500.0,
+      "maxY": 6550.0
+    },
+    "image": "/maps/lotus.png"
+  },
+  "pearl": {
+    "swap": true,
+    "flipX": false,
+    "flipY": true,
+    "framing": "box",
+    "box": [
+      0.005,
+      0.031,
+      0.982,
+      0.943
+    ],
+    "score": 0.9894,
+    "points": 179731,
+    "bounds": {
+      "minX": -500.0,
+      "maxX": 11250.0,
+      "minY": -6100.0,
+      "maxY": 6550.0
+    },
+    "image": "/maps/pearl.png"
+  },
+  "split": {
+    "swap": false,
+    "flipX": false,
+    "flipY": false,
+    "framing": "box",
+    "box": [
+      0.005,
+      0.019,
+      0.992,
+      0.981
+    ],
+    "score": 0.96,
+    "points": 182928,
+    "bounds": {
+      "minX": -3450.0,
+      "maxX": 8300.0,
+      "minY": -10050.0,
+      "maxY": 950.0
+    },
+    "image": "/maps/split.png"
+  },
+  "summit": {
+    "swap": true,
+    "flipX": true,
+    "flipY": true,
+    "framing": "box",
+    "box": [
+      0.12,
+      0.09,
+      0.881,
+      0.911
+    ],
+    "score": 0.3392,
+    "points": 2099,
+    "bounds": {
+      "minX": 300.0,
+      "maxX": 12700.0,
+      "minY": -50.0,
+      "maxY": 10250.0
+    },
+    "image": "/maps/summit.png"
+  },
+  "sunset": {
+    "swap": true,
+    "flipX": false,
+    "flipY": true,
+    "framing": "box",
+    "box": [
+      0.0419921875,
+      0.0087890625,
+      0.970703125,
+      0.98828125
+    ],
+    "score": 0.9921,
+    "points": 118100,
+    "bounds": {
+      "minX": -6000.0,
+      "maxX": 6450.0,
+      "minY": -5800.0,
+      "maxY": 6000.0
+    },
+    "image": "/maps/sunset.png"
+  }
+}

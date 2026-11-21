@@ -1,8 +1,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from src.api.routes import router
+from src.api.scout_routes import router as scout_router
 
-app = FastAPI(title="C9 Oracle: VALORANT Assistant Coach API")
+app = FastAPI(title="C9 Oracle: VALORANT Scouting and Coaching API")
 
 app.add_middleware(
     CORSMiddleware,
@@ -13,6 +14,7 @@ app.add_middleware(
 )
 
 app.include_router(router)
+app.include_router(scout_router)
 
 
 @app.get("/health")

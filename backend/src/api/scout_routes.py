@@ -1,0 +1,246 @@
+from typing import List, Optional, Set
+
+from fastapi import APIRouter, HTTPException, Query
+
+from src.ai.gemini import gemini_call
+from src.scouting.card import build_card
+from src.scouting.replay import build_replay, series_for_teams
+from src.scouting.timeout import timeout_advice
+from src.scouting.attack import AT_CHOICES as ATTACK_AT_CHOICES, attack_profile
+from src.scouting.aggregate import Filters, operator_query, team_options, utility_query
+from src.scouting.buys import BUY_TYPES
+from src.scouting.setups import AT_CHOICES, NeedsOneMap, defense_setups
+from src.scouting.catalog import clean_team_name, find_team_ids, load_catalog, team_list
+from src.vlr.client import SOURCE, VlrClient, VlrUnavailable
+
+router = APIRouter(prefix="/api/v1/scout")
+
+_vlr: Optional[VlrClient] = None
+
+
+def get_vlr_client() -> VlrClient:
+    global _vlr
+    if _vlr is None:
+        _vlr = VlrClient()
+    return _vlr
+
+
+def _csv(v: Optional[str]) -> Optional[Set[str]]:
+    if not v:
+        return None
+    items = {x.strip().lower() for x in v.split(",") if x.strip()}
+    return items or None
+
+
+def _team_ids(team: str) -> List[str]:
+    """`team` is a team ID, a comma list of IDs, or an exact team name."""
+    cat = load_catalog()
+    parts = [p.strip() for p in team.split(",") if p.strip()]
+    if parts and all(p in cat.teams for p in parts):
+        return parts
+    ids = find_team_ids(team)
+    if not ids:
+        raise HTTPException(status_code=404, detail=f"Unknown team: {team}")
+    return ids
+
+
+def _filters(
+    team: str,
+    maps: Optional[str],
+    side: Optional[str],
+    agents: Optional[str],
+    players: Optional[str],
+    abilities: Optional[str],
+    categories: Optional[str],
+    patches: Optional[str],
+    events: Optional[str],
+    exclude_low_rate: bool,
+    last_n_series: Optional[int],
+    buys: Optional[str] = None,
+) -> Filters:
+    if side and side not in ("attacker", "defender"):
+        raise HTTPException(status_code=422, detail="side must be 'attacker' or 'defender'")
+    buy_set = _csv(buys)
+    if buy_set and not buy_set <= set(BUY_TYPES):
+        raise HTTPException(status_code=422, detail=f"buys must be a comma list of {', '.join(BUY_TYPES)}")
+    return Filters(
+        buys=buy_set,
+        team_ids=_team_ids(team),
+        maps=_csv(maps),
+        side=side,
+        agents=_csv(agents),
+        players={p.strip() for p in players.split(",") if p.strip()} if players else None,
+        abilities=_csv(abilities),
+        categories=_csv(categories),
+        patches={p.strip() for p in patches.split(",") if p.strip()} if patches else None,
+        events={e.strip() for e in events.split("|") if e.strip()} if events else None,
+        exclude_low_rate=exclude_low_rate,
+        last_n_series=last_n_series,
+    )
+
+
+@router.get("/teams")
+def teams(min_series: int = Query(1, ge=1)):
+    """Teams in the dataset that can be scouted (most matches first)."""
+    return team_list(min_series=min_series)
+
+
+@router.get("/teams/{team}/vlr")
+def vlr_context(team: str, date_start: Optional[str] = Query(None, pattern=r"^\d{4}-\d{2}-\d{2}$")):
+    """VLR.gg map win rates and roster for this team, via a self-hosted vlrggapi. Never raises if VLR is down."""
+    cat = load_catalog()
+    name = clean_team_name(cat.teams[team].get("name", team)) if team in cat.teams else team
+    try:
+        return get_vlr_client().team_profile(name, date_start)
+    except VlrUnavailable as exc:
+        return {"available": False, "source": SOURCE, "query": name, "reason": str(exc)}
+
+
+@router.get("/teams/{team}/options")
+def options(team: str):
+    """Filter values (maps, agents, players, patches, events, abilities) drawn from this team's matches."""
+    return team_options(_team_ids(team))
+
+
+@router.get("/teams/{team}/utility")
+def utility(
+    team: str,
+    maps: Optional[str] = Query(None, description="Comma list, e.g. haven,lotus. A single map enables heatmap hotspots"),
+    side: Optional[str] = Query(None, description="attacker | defender"),
+    agents: Optional[str] = None,
+    players: Optional[str] = Query(None, description="Comma list of player IDs"),
+    abilities: Optional[str] = Query(None, description="Comma list of ability IDs, e.g. trapwire,alarmbot"),
+    categories: Optional[str] = Query(None, description="placeable,recon,smoke,stall,flash,molly,other"),
+    patches: Optional[str] = None,
+    events: Optional[str] = Query(None, description="Event names separated by |"),
+    exclude_low_rate: bool = False,
+    last_n_series: Optional[int] = Query(None, ge=1),
+    buys: Optional[str] = Query(None, description="pistol,eco,half,full (this team's buy in the round)"),
+):
+    f = _filters(team, maps, side, agents, players, abilities, categories, patches, events, exclude_low_rate, last_n_series, buys)
+    return utility_query(f)
+
+
+@router.get("/teams/{team}/operator")
+def operator(
+    team: str,
+    maps: Optional[str] = None,
+    side: Optional[str] = None,
+    agents: Optional[str] = None,
+    players: Optional[str] = None,
+    patches: Optional[str] = None,
+    events: Optional[str] = None,
+    exclude_low_rate: bool = False,
+    last_n_series: Optional[int] = Query(None, ge=1),
+    buys: Optional[str] = Query(None, description="pistol,eco,half,full (this team's buy in the round)"),
+):
+    f = _filters(team, maps, side, agents, players, None, None, patches, events, exclude_low_rate, last_n_series, buys)
+    return operator_query(f)
+
+
+@router.get("/teams/{team}/defense")
+def defense(
+    team: str,
+    maps: str = Query(..., description="Exactly one map, e.g. haven"),
+    at: int = Query(15, description="Seconds after freezetime to read the setup: 10, 15 or 20"),
+    agents: Optional[str] = None,
+    players: Optional[str] = None,
+    patches: Optional[str] = None,
+    events: Optional[str] = None,
+    exclude_low_rate: bool = False,
+    last_n_series: Optional[int] = Query(None, ge=1),
+    buys: Optional[str] = Query(None, description="pistol,eco,half,full (this team's buy in the round)"),
+):
+    """Defender setups: how many players hold each site early in the round, with win rates."""
+    if at not in AT_CHOICES:
+        raise HTTPException(status_code=422, detail=f"at must be one of {list(AT_CHOICES)}")
+    f = _filters(team, maps, "defender", agents, players, None, None, patches, events, exclude_low_rate, last_n_series, buys)
+    try:
+        return defense_setups(f, at=float(at))
+    except NeedsOneMap as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+
+
+@router.get("/teams/{team}/attack")
+def attack(
+    team: str,
+    maps: str = Query(..., description="Exactly one map, e.g. haven"),
+    at: int = Query(45, description="Seconds after freezetime to read the attacker spread: 20, 30 or 45"),
+    agents: Optional[str] = None,
+    players: Optional[str] = None,
+    patches: Optional[str] = None,
+    events: Optional[str] = None,
+    exclude_low_rate: bool = False,
+    last_n_series: Optional[int] = Query(None, ge=1),
+    buys: Optional[str] = Query(None, description="pistol,eco,half,full (this team's buy in the round)"),
+):
+    """Attack defaults and executes: plant sites, pace, attacker spread and the utility used before the plant."""
+    if at not in ATTACK_AT_CHOICES:
+        raise HTTPException(status_code=422, detail=f"at must be one of {list(ATTACK_AT_CHOICES)}")
+    f = _filters(team, maps, "attacker", agents, players, None, None, patches, events, exclude_low_rate, last_n_series, buys)
+    try:
+        return attack_profile(f, at=float(at))
+    except NeedsOneMap as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+
+
+@router.get("/teams/{team}/card")
+def counter_card(
+    team: str,
+    maps: str = Query(..., description="Exactly one map, e.g. haven"),
+    patches: Optional[str] = None,
+    events: Optional[str] = None,
+    last_n_series: Optional[int] = Query(None, ge=1),
+):
+    """Printable counter-card for one map: how to attack them, defend against them, and handle their Operator."""
+    f = _filters(team, maps, None, None, None, None, None, patches, events, False, last_n_series, None)
+    cat = load_catalog()
+    name = clean_team_name(cat.teams[f.team_ids[0]].get("name", team)) if f.team_ids and f.team_ids[0] in cat.teams else team
+    try:
+        return build_card(f, name)
+    except NeedsOneMap as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+
+
+@router.get("/teams/{team}/timeout")
+def timeout(
+    team: str,
+    maps: str = Query(..., description="Exactly one map, e.g. lotus"),
+    side: str = Query(..., description="The scouted team's side in the next round: attacker | defender"),
+    streak: int = Query(0, ge=-12, le=12, description="Their run going in: +k won the last k rounds, -k lost the last k"),
+    observed: Optional[str] = Query(None, description="Sites they planted in recent rounds, oldest first, e.g. S3,S3,S1"),
+    ai: bool = Query(False, description="Add a Gemini-worded call (needs GEMINI_API_KEY; numbers are checked against the data)"),
+    patches: Optional[str] = None,
+    events: Optional[str] = None,
+    last_n_series: Optional[int] = Query(None, ge=1),
+):
+    """Timeout advisor: up to three adjustments from how this opponent behaves in this situation."""
+    if side not in ("attacker", "defender"):
+        raise HTTPException(status_code=422, detail="side must be 'attacker' or 'defender'")
+    f = _filters(team, maps, None, None, None, None, None, patches, events, False, last_n_series, None)
+    obs = [x.strip() for x in observed.split(",") if x.strip()] if observed else []
+    try:
+        advice = timeout_advice(f, side, streak, obs)
+    except NeedsOneMap as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+    if ai:
+        advice["ai"] = gemini_call(advice)
+    return advice
+
+
+@router.get("/teams/{team}/series")
+def team_series(team: str, limit: int = Query(60, ge=1, le=200)):
+    """A team's matches, newest first, with each game's map, for picking a replay."""
+    return series_for_teams(_team_ids(team), limit)
+
+
+@router.get("/series/{series_id}/games/{game_id}/replay")
+def replay(series_id: str, game_id: str):
+    """Positions over time, kills, plants and utility for every round of one game, for the 2D replay."""
+    try:
+        data = build_replay(series_id, game_id)
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail=f"Unknown series: {series_id}")
+    if data is None:
+        raise HTTPException(status_code=404, detail=f"No game {game_id} in series {series_id}")
+    return data

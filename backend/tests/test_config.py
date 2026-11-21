@@ -13,12 +13,15 @@ def test_settings_default_values():
     assert settings.VLR_API_BASE_URL == "https://vlrggapi.vercel.app"
     assert settings.VLR_CACHE_TTL == 300
 
-    # Verify legacy attributes are removed
-    assert not hasattr(settings, "VAL_DIR")
-    assert not hasattr(settings, "META_DIR")
-    assert not hasattr(settings, "SUPPLEMENT_DIR")
-    assert not hasattr(settings, "DEFAULT_DATA_DIR")
-    assert not hasattr(settings, "STL_DATA_DIR")
+    # The Scout engine still reads the GRID dataset, so its path settings stay.
+    assert hasattr(settings, "VAL_DIR") and hasattr(settings, "META_DIR") and hasattr(settings, "SUPPLEMENT_DIR")
+
+
+def test_settings_resolves_data_dir():
+    settings = get_settings()
+    if not settings.DATA_DIR.exists():
+        pytest.skip("GRID dataset not available")
+    assert settings.VAL_DIR.exists() and settings.SUPPLEMENT_DIR.exists() and settings.META_DIR.exists()
 
 
 def test_settings_env_override(monkeypatch):

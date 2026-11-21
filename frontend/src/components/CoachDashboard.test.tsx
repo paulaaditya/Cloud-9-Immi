@@ -1,6 +1,6 @@
 import React from "react";
 import { render, screen, fireEvent, act, within } from "@testing-library/react";
-import CoachDashboardPage from "../app/page";
+import CoachDashboardPage from "../app/coach/page";
 import { useCoachStore } from "../store/coachStore";
 import { CoachingReportResponse, FeaturedSeries } from "../types/api";
 
